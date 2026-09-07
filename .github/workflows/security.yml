@@ -1,0 +1,38 @@
+name: Security & Quality Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-audit:
+    name: Security Vulnerability & Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: NPM Dependency Audit (Production)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Check for Accidentally Committed Secrets
+        run: |
+          if [ -f .env.local ]; then
+            echo "::error::.env.local must never be committed to repository!"
+            exit 1
+          fi
+          echo "Secret check passed: No local env files tracked in git."
+
+      - name: TypeScript Type Check & Build Validation
+        run: npm run build

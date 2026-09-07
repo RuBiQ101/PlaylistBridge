@@ -1,0 +1,17 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getSpotifyAuthUrl } from '@/lib/spotify';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  if (!clientId || clientId === 'your_spotify_client_id_here') {
+    return NextResponse.redirect(new URL('/?error=spotify_credentials_missing', request.nextUrl.origin));
+  }
+
+  // Spotify requires the exact registered loopback URI: http://127.0.0.1:3000/api/auth/spotify/callback
+  const redirectUri = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3000/api/auth/spotify/callback';
+  const state = encodeURIComponent(request.nextUrl.origin);
+  const authUrl = getSpotifyAuthUrl(redirectUri, state);
+  return NextResponse.redirect(authUrl);
+}

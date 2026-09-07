@@ -203,12 +203,13 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900/80 bg-slate-950/40 py-6 text-center text-xs text-slate-500">
+      {/* Footer with Copyright */}
+      <footer className="border-t border-slate-900/80 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-300">PlaylistBridge</span>
-            <span>• High-Performance Universal Playlist Migration</span>
+            <span>•</span>
+            <span>© 2026 RuBiQ. All rights reserved.</span>
           </div>
           <div className="flex items-center gap-4 text-[11px]">
             <span>Spotify Web API</span>

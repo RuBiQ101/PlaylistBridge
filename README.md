@@ -64,3 +64,12 @@ Run the automated track normalization test suite:
 ```bash
 npx tsx lib/test-normalization.ts
 ```
+
+---
+
+## 📄 License & Copyright
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for more details.
+
+**Copyright © 2026 RuBiQ (Abhishek Nautiyal). All rights reserved.**
+

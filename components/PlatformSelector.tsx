@@ -147,17 +147,6 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       ),
     },
     {
-      id: 'soundcloud',
-      name: 'SoundCloud',
-      category: 'Platform',
-      color: 'text-orange-500',
-      bgColor: 'bg-orange-950/30',
-      borderColor: 'border-orange-500/40',
-      available: true,
-      badge: 'Active & Ready',
-      iconSvg: (cls = 'w-6 h-6') => <Disc3 className={`${cls} text-orange-400`} />,
-    },
-    {
       id: 'tidal',
       name: 'Tidal',
       category: 'Platform',
@@ -328,7 +317,6 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                 {(platformId === 'apple' ||
                   platformId === 'amazon' ||
                   platformId === 'jiosaavn' ||
-                  platformId === 'soundcloud' ||
                   platformId === 'tidal') && (
                   <button
                     onClick={() => setDialogPlatform(platformId)}
@@ -370,8 +358,6 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   ? 'bg-cyan-600 hover:bg-cyan-500 text-black shadow-cyan-950/40'
                   : platformId === 'jiosaavn'
                   ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-teal-950/40'
-                  : platformId === 'soundcloud'
-                  ? 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-950/40'
                   : 'bg-sky-600 hover:bg-sky-500 text-white shadow-sky-950/40'
               }`}
             >

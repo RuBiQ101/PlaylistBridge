@@ -39,12 +39,6 @@ export async function GET() {
         userId: session.jiosaavn?.userId,
         avatarUrl: session.jiosaavn?.avatarUrl,
       },
-      soundcloud: {
-        connected: !!session.soundcloud?.accessToken,
-        displayName: session.soundcloud?.displayName,
-        userId: session.soundcloud?.userId,
-        avatarUrl: session.soundcloud?.avatarUrl,
-      },
       tidal: {
         connected: !!session.tidal?.accessToken,
         displayName: session.tidal?.displayName,

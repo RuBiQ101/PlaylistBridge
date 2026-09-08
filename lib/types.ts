@@ -4,7 +4,6 @@ export type PlatformId =
   | 'apple'
   | 'amazon'
   | 'jiosaavn'
-  | 'soundcloud'
   | 'tidal';
 
 export interface GenericPlaylist {
@@ -146,7 +145,6 @@ export interface PlatformAuthStatus {
   apple?: PlatformAccountDetails;
   amazon?: PlatformAccountDetails;
   jiosaavn?: PlatformAccountDetails;
-  soundcloud?: PlatformAccountDetails;
   tidal?: PlatformAccountDetails;
   isDemoMode: boolean;
 }

@@ -8,7 +8,6 @@ import {
   MOCK_APPLE_PLAYLISTS,
   MOCK_AMAZON_PLAYLISTS,
   MOCK_JIOSAAVN_PLAYLISTS,
-  MOCK_SOUNDCLOUD_PLAYLISTS,
   MOCK_TIDAL_PLAYLISTS,
   COMMON_TEST_TRACKS,
   searchMockUniversal,
@@ -104,18 +103,6 @@ export const PLATFORMS_CONFIG: Record<PlatformId, PlatformConfig> = {
     defaultScopes: 'jiosaavn:playlist:read-write',
     connectUrl: '/api/auth/jiosaavn',
   },
-  soundcloud: {
-    id: 'soundcloud',
-    name: 'SoundCloud',
-    tagline: 'SoundCloud API & Tracks',
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-950/30',
-    borderColor: 'border-orange-500/40',
-    badge: 'Active & Ready',
-    available: true,
-    defaultScopes: 'soundcloud:library:read-write',
-    connectUrl: '/api/auth/soundcloud',
-  },
   tidal: {
     id: 'tidal',
     name: 'Tidal',
@@ -152,9 +139,6 @@ export async function fetchPlatformPlaylists(
   }
   if (platform === 'jiosaavn') {
     return MOCK_JIOSAAVN_PLAYLISTS;
-  }
-  if (platform === 'soundcloud') {
-    return MOCK_SOUNDCLOUD_PLAYLISTS;
   }
   if (platform === 'tidal') {
     return MOCK_TIDAL_PLAYLISTS;
@@ -297,7 +281,6 @@ export async function createPlatformPlaylist(
   else if (platform === 'apple') url = `https://music.apple.com/playlist/${fakeId}`;
   else if (platform === 'amazon') url = `https://music.amazon.com/playlists/${fakeId}`;
   else if (platform === 'jiosaavn') url = `https://www.jiosaavn.com/featured/${fakeId}`;
-  else if (platform === 'soundcloud') url = `https://soundcloud.com/user/sets/${fakeId}`;
   else if (platform === 'tidal') url = `https://tidal.com/playlist/${fakeId}`;
 
   return { id: fakeId, url };

@@ -378,20 +378,6 @@ export const MOCK_JIOSAAVN_PLAYLISTS: GenericPlaylist[] = [
   },
 ];
 
-// ======================= SOUNDCLOUD =======================
-export const MOCK_SOUNDCLOUD_PLAYLISTS: GenericPlaylist[] = [
-  {
-    id: 'sc-pl-indie-unreleased',
-    title: 'SoundCloud Underground & Remixes',
-    description: 'Raw edits, exclusive bootlegs, and producer beats.',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80',
-    itemCount: 8,
-    channelTitle: 'SoundCloud Curators',
-    ownerTitle: 'SoundCloud User',
-    platform: 'soundcloud',
-  },
-];
-
 // ======================= TIDAL =======================
 export const MOCK_TIDAL_PLAYLISTS: GenericPlaylist[] = [
   {
@@ -494,7 +480,6 @@ export function searchMockUniversal(
         else if (targetPlatform === 'apple') platformUrl = `https://music.apple.com/song/${item.id}`;
         else if (targetPlatform === 'amazon') platformUrl = `https://music.amazon.com/tracks/${item.id}`;
         else if (targetPlatform === 'jiosaavn') platformUrl = `https://www.jiosaavn.com/song/${item.id}`;
-        else if (targetPlatform === 'soundcloud') platformUrl = `https://soundcloud.com/track/${item.id}`;
         else if (targetPlatform === 'tidal') platformUrl = `https://tidal.com/track/${item.id}`;
 
         return {
@@ -524,7 +509,6 @@ export function searchMockUniversal(
   else if (targetPlatform === 'apple') platformUrl = `https://music.apple.com/song/${genId}`;
   else if (targetPlatform === 'amazon') platformUrl = `https://music.amazon.com/tracks/${genId}`;
   else if (targetPlatform === 'jiosaavn') platformUrl = `https://www.jiosaavn.com/song/${genId}`;
-  else if (targetPlatform === 'soundcloud') platformUrl = `https://soundcloud.com/track/${genId}`;
   else if (targetPlatform === 'tidal') platformUrl = `https://tidal.com/track/${genId}`;
 
   return {

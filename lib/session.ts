@@ -21,7 +21,6 @@ export interface SessionData {
   apple?: AccountSessionInfo;
   amazon?: AccountSessionInfo;
   jiosaavn?: AccountSessionInfo;
-  soundcloud?: AccountSessionInfo;
   tidal?: AccountSessionInfo;
   isDemoMode?: boolean;
 }
@@ -88,7 +87,6 @@ export async function getSession(): Promise<SessionData> {
     apple: globalSession.apple || cookieSession?.apple,
     amazon: globalSession.amazon || cookieSession?.amazon,
     jiosaavn: globalSession.jiosaavn || cookieSession?.jiosaavn,
-    soundcloud: globalSession.soundcloud || cookieSession?.soundcloud,
     tidal: globalSession.tidal || cookieSession?.tidal,
     isDemoMode: globalSession.isDemoMode || cookieSession?.isDemoMode || false,
   };

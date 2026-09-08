@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
       'apple',
       'amazon',
       'jiosaavn',
-      'soundcloud',
       'tidal',
     ];
 

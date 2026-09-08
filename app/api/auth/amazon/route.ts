@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, setSessionCookie } from '@/lib/session';
+import { getAmazonAuthUrl } from '@/lib/amazon';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const session = await getSession();
-  session.amazon = {
-    accessToken: 'amazon_token_' + Date.now(),
-    displayName: 'Amazon Music User',
-    userId: 'amazon_user_' + Date.now().toString(36),
-  };
-  const response = NextResponse.redirect(new URL('/?connected=amazon', request.nextUrl.origin));
-  setSessionCookie(response, session);
-  return response;
+  const clientId = process.env.AMAZON_CLIENT_ID;
+
+  const redirectHost =
+    process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || 'http://127.0.0.1:3000';
+
+  if (!clientId || clientId === 'your_amazon_client_id_here') {
+    return NextResponse.redirect(
+      new URL('/?auth_error=amazon_credentials_missing', redirectHost)
+    );
+  }
+
+  const redirectUri =
+    process.env.AMAZON_REDIRECT_URI || `${redirectHost}/api/auth/amazon/callback`;
+  const state = encodeURIComponent(redirectHost);
+  const authUrl = getAmazonAuthUrl(redirectUri, state);
+
+  return NextResponse.redirect(authUrl);
 }

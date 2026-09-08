@@ -227,7 +227,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     const cfg = PLATFORMS_CONFIG[platformId];
     if (!cfg) return;
 
-    if (platformId === 'youtube' || platformId === 'spotify') {
+    if (platformId === 'youtube' || platformId === 'spotify' || platformId === 'amazon') {
       if (typeof window !== 'undefined') {
         localStorage.setItem('playlistbridge_source', sourceId);
         localStorage.setItem('playlistbridge_target', targetId);
@@ -236,7 +236,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       return;
     }
 
-    // Open connection dialog for Apple, Amazon, JioSaavn, SoundCloud, Tidal
+    // Open connection dialog for Apple, JioSaavn, SoundCloud, Tidal
     setDialogPlatform(platformId);
   };
 

@@ -12,10 +12,11 @@ import {
   Check,
   Disc3,
   Radio,
-  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { PlatformAccountDetails, PlatformAuthStatus, PlatformId } from '@/lib/types';
 import { PLATFORMS_CONFIG } from '@/lib/platforms';
+import { ConnectServiceDialog } from '@/components/ConnectServiceDialog';
 
 interface PlatformSelectorProps {
   authStatus: PlatformAuthStatus | null;
@@ -56,7 +57,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
 }) => {
   const [sourceId, setSourceId] = useState<PlatformId>(selectedSource);
   const [targetId, setTargetId] = useState<PlatformId>(selectedTarget);
-  const [connectingPlatform, setConnectingPlatform] = useState<PlatformId | null>(null);
+  const [dialogPlatform, setDialogPlatform] = useState<PlatformId | null>(null);
 
   // Sync state if props change from parent
   useEffect(() => {
@@ -221,13 +222,12 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     }
   };
 
-  // Handle in-place connect without full-page reloads
-  const handleConnect = async (platformId: PlatformId) => {
+  // Handle Connect Click
+  const handleConnectClick = (platformId: PlatformId) => {
     const cfg = PLATFORMS_CONFIG[platformId];
     if (!cfg) return;
 
     if (platformId === 'youtube' || platformId === 'spotify') {
-      // Official OAuth requires top-level redirect
       if (typeof window !== 'undefined') {
         localStorage.setItem('playlistbridge_source', sourceId);
         localStorage.setItem('playlistbridge_target', targetId);
@@ -236,16 +236,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       return;
     }
 
-    // Direct in-place connect for Apple, Amazon, JioSaavn, SoundCloud, Tidal
-    setConnectingPlatform(platformId);
-    try {
-      await fetch(cfg.connectUrl);
-      onRefreshAuth?.();
-    } catch (e) {
-      console.error('Failed to connect platform', e);
-    } finally {
-      setConnectingPlatform(null);
-    }
+    // Open connection dialog for Apple, Amazon, JioSaavn, SoundCloud, Tidal
+    setDialogPlatform(platformId);
   };
 
   const renderConnectionCard = (
@@ -256,7 +248,6 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     const cfg = PLATFORMS_CONFIG[platformId] || PLATFORMS_CONFIG.youtube;
     const accountDetails = getAccountForPlatform(platformId);
     const isConnected = !!accountDetails?.connected;
-    const isConnecting = connectingPlatform === platformId;
 
     return (
       <div
@@ -325,19 +316,36 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   <p className="text-xs font-semibold text-white line-clamp-1">
                     {accountDetails?.displayName ||
                       accountDetails?.channelTitle ||
-                      `${cfg.name} Authorized`}
+                      `${cfg.name} Authorized Account`}
                   </p>
-                  <p className="text-[11px] text-slate-400">Scope: {cfg.defaultScopes}</p>
+                  <p className="text-[11px] text-slate-400">
+                    ID: {accountDetails?.userId || 'Authorized'} • Scope: {cfg.defaultScopes}
+                  </p>
                 </div>
               </div>
 
-              <button
-                onClick={() => onLogout(platformId)}
-                className="text-xs text-slate-400 hover:text-red-400 p-2 rounded-xl hover:bg-slate-800 transition cursor-pointer"
-                title={`Disconnect ${cfg.name}`}
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                {(platformId === 'apple' ||
+                  platformId === 'amazon' ||
+                  platformId === 'jiosaavn' ||
+                  platformId === 'soundcloud' ||
+                  platformId === 'tidal') && (
+                  <button
+                    onClick={() => setDialogPlatform(platformId)}
+                    className="text-xs text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition cursor-pointer"
+                    title="Change Profile"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => onLogout(platformId)}
+                  className="text-xs text-slate-400 hover:text-red-400 p-2 rounded-xl hover:bg-slate-800 transition cursor-pointer"
+                  title={`Disconnect ${cfg.name}`}
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ) : (
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -350,12 +358,9 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
         <div className="pt-6">
           {!isConnected ? (
             <button
-              onClick={() => handleConnect(platformId)}
-              disabled={isConnecting}
+              onClick={() => handleConnectClick(platformId)}
               className={`w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-sm transition-all shadow-lg group cursor-pointer ${
-                isConnecting
-                  ? 'bg-slate-800 text-slate-400 cursor-wait'
-                  : platformId === 'youtube'
+                platformId === 'youtube'
                   ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/40'
                   : platformId === 'spotify'
                   ? 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/40'
@@ -370,17 +375,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   : 'bg-sky-600 hover:bg-sky-500 text-white shadow-sky-950/40'
               }`}
             >
-              {isConnecting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Connecting {cfg.name}...</span>
-                </>
-              ) : (
-                <>
-                  <span>Connect {cfg.name} Account</span>
-                  <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </>
-              )}
+              <span>Connect {cfg.name} Account</span>
+              <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           ) : (
             <div className="text-center py-1">
@@ -396,6 +392,17 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
 
   return (
     <div className="space-y-10 max-w-5xl mx-auto px-4 py-4">
+      {/* Account Login / Connect Dialog */}
+      <ConnectServiceDialog
+        platformId={dialogPlatform}
+        authStatus={authStatus}
+        isOpen={!!dialogPlatform}
+        onClose={() => setDialogPlatform(null)}
+        onConnected={() => {
+          onRefreshAuth?.();
+        }}
+      />
+
       {/* Top Breadcrumb Navigation */}
       <div className="flex items-center justify-between">
         <button

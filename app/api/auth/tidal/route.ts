@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server';
-import { getSession, saveSession } from '@/lib/session';
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession, setSessionCookie } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const session = await getSession();
   session.tidal = {
     accessToken: 'tidal_token_' + Date.now(),
-    displayName: 'TIDAL HiFi Plus User',
-    userId: 'tidal_user_id',
+    displayName: 'TIDAL HiFi User',
+    userId: 'tidal_user_' + Date.now().toString(36),
   };
-  await saveSession(session);
-  return NextResponse.redirect(new URL('/?connected=tidal', request.url));
+  const response = NextResponse.redirect(new URL('/?connected=tidal', request.nextUrl.origin));
+  setSessionCookie(response, session);
+  return response;
 }

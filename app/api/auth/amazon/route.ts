@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server';
-import { getSession, saveSession } from '@/lib/session';
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession, setSessionCookie } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const session = await getSession();
   session.amazon = {
     accessToken: 'amazon_token_' + Date.now(),
-    displayName: 'Amazon Prime Music User',
-    userId: 'amazon_user_id',
+    displayName: 'Amazon Music User',
+    userId: 'amazon_user_' + Date.now().toString(36),
   };
-  await saveSession(session);
-  return NextResponse.redirect(new URL('/?connected=amazon', request.url));
+  const response = NextResponse.redirect(new URL('/?connected=amazon', request.nextUrl.origin));
+  setSessionCookie(response, session);
+  return response;
 }

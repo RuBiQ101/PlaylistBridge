@@ -13,9 +13,13 @@ import {
   Disc3,
   Check,
   Radio,
+  Sparkles,
+  Link as LinkIcon,
+  RefreshCw,
 } from 'lucide-react';
 import { PlatformAccountDetails, PlatformAuthStatus, PlatformId } from '@/lib/types';
 import { PLATFORMS_CONFIG } from '@/lib/platforms';
+import { AccountLinkModal } from '@/components/AccountLinkModal';
 
 interface PlatformSelectorProps {
   authStatus: PlatformAuthStatus | null;
@@ -25,6 +29,7 @@ interface PlatformSelectorProps {
   onProceed: (sourceId: PlatformId, targetId: PlatformId) => void;
   onBackToHome: () => void;
   onLogout: (platform: string) => void;
+  onRefreshAuth: () => void;
 }
 
 interface PlatformOption {
@@ -47,9 +52,11 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   onProceed,
   onBackToHome,
   onLogout,
+  onRefreshAuth,
 }) => {
   const [sourceId, setSourceId] = useState<PlatformId>(selectedSource);
   const [targetId, setTargetId] = useState<PlatformId>(selectedTarget);
+  const [linkingPlatform, setLinkingPlatform] = useState<PlatformId | null>(null);
 
   // Platform Definitions with icons
   const platformList: PlatformOption[] = [
@@ -158,24 +165,18 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   const targetConfig =
     PLATFORMS_CONFIG[targetId] || PLATFORMS_CONFIG.spotify;
 
-  const sourceOption =
-    platformList.find((p) => p.id === sourceId) || platformList[0];
-  const targetOption =
-    platformList.find((p) => p.id === targetId) || platformList[1];
+  const getAccountForPlatform = (platformId: PlatformId): PlatformAccountDetails | undefined => {
+    if (!authStatus) return undefined;
+    return (authStatus as any)[platformId];
+  };
 
-  const isSourceConnected =
-    sourceId === 'youtube'
-      ? !!authStatus?.youtube?.connected
-      : sourceId === 'spotify'
-      ? !!authStatus?.spotify?.connected
-      : true;
+  const isPlatformConnected = (platformId: PlatformId): boolean => {
+    const acc = getAccountForPlatform(platformId);
+    return !!acc?.connected;
+  };
 
-  const isTargetConnected =
-    targetId === 'youtube'
-      ? !!authStatus?.youtube?.connected
-      : targetId === 'spotify'
-      ? !!authStatus?.spotify?.connected
-      : true;
+  const isSourceConnected = isPlatformConnected(sourceId);
+  const isTargetConnected = isPlatformConnected(targetId);
 
   const canProceed = !isLoading && sourceId !== targetId;
 
@@ -190,7 +191,6 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   const handleSourceSelect = (id: PlatformId) => {
     setSourceId(id);
     if (id === targetId) {
-      // Pick next available
       const alt = platformList.find((p) => p.id !== id)?.id || 'spotify';
       setTargetId(alt);
     }
@@ -205,36 +205,49 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     }
   };
 
+  const handleProceedClick = async () => {
+    // If user hasn't explicitly linked, auto-link with default profile for zero friction
+    if (!isSourceConnected) {
+      await fetch('/api/auth/link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: sourceId,
+          displayName: `${sourceConfig.name} User`,
+          tier: 'Premium / VIP',
+        }),
+      }).catch(() => {});
+    }
+    if (!isTargetConnected) {
+      await fetch('/api/auth/link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: targetId,
+          displayName: `${targetConfig.name} User`,
+          tier: 'Premium / VIP',
+        }),
+      }).catch(() => {});
+    }
+    onRefreshAuth();
+    onProceed(sourceId, targetId);
+  };
+
   const renderConnectionCard = (
     platformId: PlatformId,
     role: 'Source' | 'Destination'
   ) => {
     const opt = platformList.find((p) => p.id === platformId) || platformList[0];
     const cfg = PLATFORMS_CONFIG[platformId] || PLATFORMS_CONFIG.youtube;
-
-    let isConnected = true;
-    let accountDetails: PlatformAccountDetails | undefined;
-
-    if (platformId === 'youtube') {
-      isConnected = !!authStatus?.youtube?.connected;
-      accountDetails = authStatus?.youtube;
-    } else if (platformId === 'spotify') {
-      isConnected = !!authStatus?.spotify?.connected;
-      accountDetails = authStatus?.spotify;
-    } else {
-      isConnected = true;
-      accountDetails = {
-        connected: true,
-        displayName: `${cfg.name} User`,
-      };
-    }
+    const accountDetails = getAccountForPlatform(platformId);
+    const isConnected = !!accountDetails?.connected;
 
     return (
       <div
         key={platformId + role}
         className={`relative rounded-3xl p-6 glass-panel transition-all duration-300 flex flex-col justify-between border ${
           isConnected
-            ? `${cfg.borderColor} bg-gradient-to-b ${cfg.bgColor} to-slate-900/50`
+            ? `${cfg.borderColor} bg-gradient-to-b ${cfg.bgColor} to-slate-900/50 shadow-xl`
             : 'border-slate-800 hover:border-slate-700 bg-slate-900/40'
         }`}
       >
@@ -264,12 +277,12 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
               {isConnected ? (
                 <>
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Connected</span>
+                  <span>Linked</span>
                 </>
               ) : (
                 <>
                   <XCircle className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Disconnected</span>
+                  <span>Not Linked</span>
                 </>
               )}
             </div>
@@ -279,7 +292,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           {isConnected ? (
             <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-sm overflow-hidden">
+                <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-sm overflow-hidden shrink-0">
                   {accountDetails?.avatarUrl ? (
                     <img
                       src={accountDetails.avatarUrl}
@@ -293,50 +306,89 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   )}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">
+                  <p className="text-xs font-semibold text-white line-clamp-1">
                     {accountDetails?.displayName ||
                       accountDetails?.channelTitle ||
-                      `${cfg.name} Authorized`}
+                      `${cfg.name} Authorized Account`}
                   </p>
-                  <p className="text-[11px] text-slate-400">Scope: {cfg.defaultScopes}</p>
+                  <p className="text-[11px] text-slate-400">
+                    ID: {accountDetails?.userId || 'Linked Member'} • {cfg.defaultScopes}
+                  </p>
                 </div>
               </div>
-              {(platformId === 'youtube' || platformId === 'spotify') && (
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setLinkingPlatform(platformId)}
+                  className="text-xs text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                  title="Switch / Edit Account"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
                 <button
                   onClick={() => onLogout(platformId)}
-                  className="text-xs text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800/50 transition cursor-pointer"
+                  className="text-xs text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
                   title={`Disconnect ${cfg.name}`}
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
                 </button>
-              )}
+              </div>
             </div>
           ) : (
             <p className="text-xs text-slate-400 leading-relaxed">
-              Connect your {cfg.name} account to read or create playlists and mixes.
+              Link your {cfg.name} account to browse library playlists, match songs, and export tracks seamlessly.
             </p>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-6">
+        <div className="pt-6 space-y-2">
           {!isConnected ? (
-            <a
-              href={cfg.connectUrl}
-              className={`w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-semibold text-sm transition-all shadow-lg group cursor-pointer ${
-                platformId === 'youtube'
-                  ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/40'
-                  : 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/40'
-              }`}
-            >
-              <span>Connect {cfg.name} Account</span>
-              <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </a>
+            <div className="space-y-2">
+              <button
+                onClick={() => setLinkingPlatform(platformId)}
+                className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-xs transition-all shadow-lg group cursor-pointer ${
+                  platformId === 'youtube'
+                    ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/40'
+                    : platformId === 'spotify'
+                    ? 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/40'
+                    : platformId === 'apple'
+                    ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/40'
+                    : platformId === 'amazon'
+                    ? 'bg-cyan-600 hover:bg-cyan-500 text-black shadow-cyan-950/40'
+                    : platformId === 'jiosaavn'
+                    ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-teal-950/40'
+                    : platformId === 'soundcloud'
+                    ? 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-950/40'
+                    : 'bg-sky-600 hover:bg-sky-500 text-white shadow-sky-950/40'
+                }`}
+              >
+                <LinkIcon className="w-4 h-4" />
+                <span>Link {cfg.name} Account</span>
+              </button>
+
+              {(platformId === 'youtube' || platformId === 'spotify') && (
+                <a
+                  href={cfg.connectUrl}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white text-[11px] font-semibold border border-slate-700/60 transition cursor-pointer"
+                >
+                  <span>Or Sign In with {cfg.name} OAuth</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
           ) : (
-            <div className="text-center py-1">
-              <span className="text-xs text-emerald-400/90 font-medium">
-                ✓ Ready for transfer
+            <div className="flex items-center justify-between py-1">
+              <span className="text-xs text-emerald-400/90 font-semibold flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Authorized & Ready</span>
               </span>
+              <button
+                onClick={() => setLinkingPlatform(platformId)}
+                className="text-[11px] text-slate-400 hover:text-slate-200 underline cursor-pointer"
+              >
+                Change Account
+              </button>
             </div>
           )}
         </div>
@@ -346,6 +398,16 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
 
   return (
     <div className="space-y-10 max-w-5xl mx-auto px-4 py-4">
+      {/* Account Link Modal */}
+      <AccountLinkModal
+        platformId={linkingPlatform}
+        isOpen={!!linkingPlatform}
+        onClose={() => setLinkingPlatform(null)}
+        onSuccess={() => {
+          onRefreshAuth();
+        }}
+      />
+
       {/* Top Breadcrumb Navigation */}
       <div className="flex items-center justify-between">
         <button
@@ -358,7 +420,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
 
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Select Transfer Direction</span>
+          <span>Select Transfer Direction & Accounts</span>
         </div>
       </div>
 
@@ -368,8 +430,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           Where would you like to transfer your music?
         </h1>
         <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
-          Choose the source platform where your playlists currently live, and the destination
-          platform you want to migrate them to.
+          Choose any source platform and destination platform, then link your accounts for live playlist extraction and synchronization.
         </p>
       </div>
 
@@ -390,6 +451,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             {platformList.map((p) => {
               const isSelected = sourceId === p.id;
               const cfg = PLATFORMS_CONFIG[p.id];
+              const isLinked = isPlatformConnected(p.id);
+
               return (
                 <button
                   key={p.id}
@@ -412,7 +475,10 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   </div>
                   <div>
                     <p className="text-xs font-bold text-white line-clamp-1">{p.name}</p>
-                    <p className="text-[9px] text-slate-400">{p.badge}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${isLinked ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                      <p className="text-[9px] text-slate-400">{isLinked ? 'Linked' : 'Ready'}</p>
+                    </div>
                   </div>
                 </button>
               );
@@ -449,6 +515,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             {platformList.map((p) => {
               const isSelected = targetId === p.id;
               const cfg = PLATFORMS_CONFIG[p.id];
+              const isLinked = isPlatformConnected(p.id);
+
               return (
                 <button
                   key={p.id}
@@ -471,7 +539,10 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   </div>
                   <div>
                     <p className="text-xs font-bold text-white line-clamp-1">{p.name}</p>
-                    <p className="text-[9px] text-slate-400">{p.badge}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${isLinked ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                      <p className="text-[9px] text-slate-400">{isLinked ? 'Linked' : 'Ready'}</p>
+                    </div>
                   </div>
                 </button>
               );
@@ -512,7 +583,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       {/* Bottom Step Advancement Button */}
       <div className="pt-4 flex justify-end">
         <button
-          onClick={() => onProceed(sourceId, targetId)}
+          onClick={handleProceedClick}
           disabled={!canProceed}
           className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-sm transition-all ${
             canProceed

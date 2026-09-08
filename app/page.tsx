@@ -187,6 +187,7 @@ export default function Home() {
             onProceed={handleProceedPlatforms}
             onBackToHome={() => setViewMode('landing')}
             onLogout={handlePlatformLogout}
+            onRefreshAuth={fetchAuthStatus}
           />
         )}
 

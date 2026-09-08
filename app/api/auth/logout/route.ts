@@ -8,20 +8,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const { platform } = body;
 
-    const res = NextResponse.json({ success: true });
+    const res = NextResponse.json({ success: true, loggedOut: platform || 'all' });
 
-    if (platform === 'spotify') {
+    if (platform && typeof platform === 'string') {
       const session = await getSession();
-      delete session.spotify;
-      if (global.__playlistBridgeSession) {
-        delete global.__playlistBridgeSession.spotify;
+      if ((session as any)[platform]) {
+        delete (session as any)[platform];
       }
-      setSessionCookie(res, session);
-    } else if (platform === 'youtube') {
-      const session = await getSession();
-      delete session.youtube;
-      if (global.__playlistBridgeSession) {
-        delete global.__playlistBridgeSession.youtube;
+      if (global.__playlistBridgeSession && (global.__playlistBridgeSession as any)[platform]) {
+        delete (global.__playlistBridgeSession as any)[platform];
       }
       setSessionCookie(res, session);
     } else {

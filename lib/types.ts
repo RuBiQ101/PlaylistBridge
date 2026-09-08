@@ -1,7 +1,6 @@
 export type PlatformId =
   | 'youtube'
   | 'spotify'
-  | 'apple'
   | 'amazon'
   | 'jiosaavn'
   | 'tidal';
@@ -142,7 +141,6 @@ export interface PlatformAccountDetails {
 export interface PlatformAuthStatus {
   spotify: PlatformAccountDetails;
   youtube: PlatformAccountDetails;
-  apple?: PlatformAccountDetails;
   amazon?: PlatformAccountDetails;
   jiosaavn?: PlatformAccountDetails;
   tidal?: PlatformAccountDetails;

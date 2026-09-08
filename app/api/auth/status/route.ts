@@ -21,12 +21,6 @@ export async function GET() {
         displayName: session.youtube?.displayName || session.youtube?.channelTitle,
         avatarUrl: session.youtube?.avatarUrl,
       },
-      apple: {
-        connected: !!session.apple?.accessToken,
-        displayName: session.apple?.displayName,
-        userId: session.apple?.userId,
-        avatarUrl: session.apple?.avatarUrl,
-      },
       amazon: {
         connected: !!session.amazon?.accessToken,
         displayName: session.amazon?.displayName,

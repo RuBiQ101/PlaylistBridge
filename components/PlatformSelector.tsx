@@ -101,21 +101,6 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       ),
     },
     {
-      id: 'apple',
-      name: 'Apple Music',
-      category: 'Platform',
-      color: 'text-rose-500',
-      bgColor: 'bg-rose-950/30',
-      borderColor: 'border-rose-500/40',
-      available: true,
-      badge: 'Active & Ready',
-      iconSvg: (cls = 'w-6 h-6') => (
-        <svg className={`${cls} fill-current text-rose-500`} viewBox="0 0 24 24">
-          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.12 7.78l-4.14 1.22c-.37.11-.64.44-.64.83v5.6c0 1.34-1.12 2.43-2.5 2.43s-2.5-1.09-2.5-2.43c0-1.34 1.12-2.43 2.5-2.43.43 0 .84.11 1.2.3V8.81c0-.78.54-1.44 1.28-1.66l4.63-1.36c.46-.14.93.2.93.68v2.66c0 .4-.27.73-.64.83-.37-.09-.76-.18-1.12-.18z" />
-        </svg>
-      ),
-    },
-    {
       id: 'amazon',
       name: 'Amazon Music',
       category: 'Platform',
@@ -225,7 +210,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       return;
     }
 
-    // Open connection dialog for Apple, JioSaavn, Tidal
+    // Open connection dialog for JioSaavn, Tidal
     setDialogPlatform(platformId);
   };
 
@@ -314,8 +299,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
               </div>
 
               <div className="flex items-center gap-1">
-                {(platformId === 'apple' ||
-                  platformId === 'amazon' ||
+                {(platformId === 'amazon' ||
                   platformId === 'jiosaavn' ||
                   platformId === 'tidal') && (
                   <button
@@ -352,8 +336,6 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/40'
                   : platformId === 'spotify'
                   ? 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/40'
-                  : platformId === 'apple'
-                  ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/40'
                   : platformId === 'amazon'
                   ? 'bg-cyan-600 hover:bg-cyan-500 text-black shadow-cyan-950/40'
                   : platformId === 'jiosaavn'

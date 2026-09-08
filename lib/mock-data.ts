@@ -306,30 +306,6 @@ export const MOCK_SPOTIFY_PLAYLIST_TRACKS: Record<string, GenericTrack[]> = {
   ],
 };
 
-// ======================= APPLE MUSIC =======================
-export const MOCK_APPLE_PLAYLISTS: GenericPlaylist[] = [
-  {
-    id: 'am-pl-top-hits',
-    title: 'Apple Music: Global Hits 2026',
-    description: 'The biggest songs across pop, indie, and electronic right now.',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-    itemCount: 8,
-    channelTitle: 'Apple Music Pop',
-    ownerTitle: 'Apple Music',
-    platform: 'apple',
-  },
-  {
-    id: 'am-pl-spatial-audio',
-    title: 'Spatial Audio: Cyberwave & Electro',
-    description: 'Immersive Dolby Atmos electronic and outrun synthesizer tracks.',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-    itemCount: 7,
-    channelTitle: 'Apple Music Electronic',
-    ownerTitle: 'Apple Music',
-    platform: 'apple',
-  },
-];
-
 // ======================= AMAZON MUSIC =======================
 export const MOCK_AMAZON_PLAYLISTS: GenericPlaylist[] = [
   {
@@ -477,7 +453,6 @@ export function searchMockUniversal(
         let platformUrl = '';
         if (targetPlatform === 'spotify') platformUrl = `https://open.spotify.com/track/${item.id}`;
         else if (targetPlatform === 'youtube') platformUrl = `https://music.youtube.com/watch?v=${item.id}`;
-        else if (targetPlatform === 'apple') platformUrl = `https://music.apple.com/song/${item.id}`;
         else if (targetPlatform === 'amazon') platformUrl = `https://music.amazon.com/tracks/${item.id}`;
         else if (targetPlatform === 'jiosaavn') platformUrl = `https://www.jiosaavn.com/song/${item.id}`;
         else if (targetPlatform === 'tidal') platformUrl = `https://tidal.com/track/${item.id}`;
@@ -506,7 +481,6 @@ export function searchMockUniversal(
   let platformUrl = '';
   if (targetPlatform === 'spotify') platformUrl = `https://open.spotify.com/track/${genId}`;
   else if (targetPlatform === 'youtube') platformUrl = `https://music.youtube.com/watch?v=${genId}`;
-  else if (targetPlatform === 'apple') platformUrl = `https://music.apple.com/song/${genId}`;
   else if (targetPlatform === 'amazon') platformUrl = `https://music.amazon.com/tracks/${genId}`;
   else if (targetPlatform === 'jiosaavn') platformUrl = `https://www.jiosaavn.com/song/${genId}`;
   else if (targetPlatform === 'tidal') platformUrl = `https://tidal.com/track/${genId}`;

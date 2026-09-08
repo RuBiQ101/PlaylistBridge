@@ -5,7 +5,6 @@ import {
   PlatformId,
 } from './types';
 import {
-  MOCK_APPLE_PLAYLISTS,
   MOCK_AMAZON_PLAYLISTS,
   MOCK_JIOSAAVN_PLAYLISTS,
   MOCK_TIDAL_PLAYLISTS,
@@ -67,18 +66,6 @@ export const PLATFORMS_CONFIG: Record<PlatformId, PlatformConfig> = {
     defaultScopes: 'playlist-modify-public & private, library',
     connectUrl: '/api/auth/spotify',
   },
-  apple: {
-    id: 'apple',
-    name: 'Apple Music',
-    tagline: 'MusicKit & Apple Music Playlists',
-    color: 'text-rose-500',
-    bgColor: 'bg-rose-950/30',
-    borderColor: 'border-rose-500/40',
-    badge: 'Active & Ready',
-    available: true,
-    defaultScopes: 'musickit:library:read-write',
-    connectUrl: '/api/auth/apple',
-  },
   amazon: {
     id: 'amazon',
     name: 'Amazon Music',
@@ -130,9 +117,6 @@ export async function fetchPlatformPlaylists(
   }
   if (platform === 'spotify') {
     return fetchUserSpotifyPlaylists(accessToken, isDemoMode);
-  }
-  if (platform === 'apple') {
-    return MOCK_APPLE_PLAYLISTS;
   }
   if (platform === 'amazon') {
     return MOCK_AMAZON_PLAYLISTS;
@@ -278,7 +262,6 @@ export async function createPlatformPlaylist(
   let url = '';
   if (platform === 'youtube') url = `https://music.youtube.com/playlist?list=${fakeId}`;
   else if (platform === 'spotify') url = `https://open.spotify.com/playlist/${fakeId}`;
-  else if (platform === 'apple') url = `https://music.apple.com/playlist/${fakeId}`;
   else if (platform === 'amazon') url = `https://music.amazon.com/playlists/${fakeId}`;
   else if (platform === 'jiosaavn') url = `https://www.jiosaavn.com/featured/${fakeId}`;
   else if (platform === 'tidal') url = `https://tidal.com/playlist/${fakeId}`;

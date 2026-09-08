@@ -18,7 +18,6 @@ export interface AccountSessionInfo {
 export interface SessionData {
   spotify?: AccountSessionInfo;
   youtube?: AccountSessionInfo;
-  apple?: AccountSessionInfo;
   amazon?: AccountSessionInfo;
   jiosaavn?: AccountSessionInfo;
   tidal?: AccountSessionInfo;
@@ -84,7 +83,6 @@ export async function getSession(): Promise<SessionData> {
   const mergedSession: SessionData = {
     spotify: globalSession.spotify || cookieSession?.spotify,
     youtube: globalSession.youtube || cookieSession?.youtube,
-    apple: globalSession.apple || cookieSession?.apple,
     amazon: globalSession.amazon || cookieSession?.amazon,
     jiosaavn: globalSession.jiosaavn || cookieSession?.jiosaavn,
     tidal: globalSession.tidal || cookieSession?.tidal,

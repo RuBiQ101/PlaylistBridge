@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
     const validPlatforms: PlatformId[] = [
       'youtube',
       'spotify',
-      'apple',
       'amazon',
       'jiosaavn',
       'tidal',

@@ -52,19 +52,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
 
         {/* Supported Platforms Pills */}
-        <div className="pt-8 border-t border-slate-800/60 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400">
-          <span className="text-slate-500 font-medium">Supported Platforms:</span>
-          <span className="px-3 py-1 rounded-full bg-red-950/30 border border-red-500/30 text-red-400 font-semibold flex items-center gap-1.5">
+        <div className="pt-8 border-t border-slate-800/60 flex flex-wrap items-center justify-center gap-2.5 text-xs text-slate-400">
+          <span className="text-slate-500 font-medium">Platforms:</span>
+          <span className="px-3 py-1 rounded-full bg-red-950/40 border border-red-500/30 text-red-400 font-semibold flex items-center gap-1.5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> YouTube Music
           </span>
-          <span className="px-3 py-1 rounded-full bg-emerald-950/30 border border-emerald-500/30 text-emerald-400 font-semibold flex items-center gap-1.5">
+          <span className="px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-semibold flex items-center gap-1.5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-spotify" /> Spotify
           </span>
-          <span className="px-3 py-1 rounded-full bg-slate-900/60 border border-slate-800 text-slate-500 font-medium">
-            Apple Music (Coming Soon)
+          <span className="px-3 py-1 rounded-full bg-rose-950/30 border border-rose-500/30 text-rose-400 font-medium flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Apple Music (Beta)
+          </span>
+          <span className="px-3 py-1 rounded-full bg-cyan-950/30 border border-cyan-500/30 text-cyan-400 font-medium flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" /> Amazon Music (Beta)
+          </span>
+          <span className="px-3 py-1 rounded-full bg-teal-950/30 border border-teal-500/30 text-teal-400 font-medium flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-400" /> JioSaavn / Jio Music (Beta)
           </span>
           <span className="px-3 py-1 rounded-full bg-slate-900/60 border border-slate-800 text-slate-500 font-medium">
-            Amazon Music (Coming Soon)
+            SoundCloud & Tidal
           </span>
         </div>
       </section>

@@ -12,7 +12,7 @@ import {
   Music2,
   Disc3,
   Check,
-  Zap,
+  Radio,
 } from 'lucide-react';
 import { PlatformAuthStatus, PlatformId } from '@/lib/types';
 
@@ -92,12 +92,12 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     }
   };
 
-  // Source Platform List
-  const sourcePlatforms: PlatformOption[] = [
+  // Platform Icons & Definitions
+  const platformList: PlatformOption[] = [
     {
       id: 'youtube',
       name: 'YouTube Music',
-      category: 'Source',
+      category: 'Platform',
       color: 'text-red-500',
       bgColor: 'bg-red-950/30',
       borderColor: 'border-red-500/40',
@@ -112,7 +112,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     {
       id: 'spotify',
       name: 'Spotify',
-      category: 'Source',
+      category: 'Platform',
       color: 'text-spotify',
       bgColor: 'bg-emerald-950/30',
       borderColor: 'border-emerald-500/40',
@@ -127,18 +127,53 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     {
       id: 'apple',
       name: 'Apple Music',
-      category: 'Source',
-      color: 'text-pink-500',
-      bgColor: 'bg-pink-950/30',
-      borderColor: 'border-pink-500/40',
+      category: 'Platform',
+      color: 'text-rose-500',
+      bgColor: 'bg-rose-950/30',
+      borderColor: 'border-rose-500/40',
       available: false,
-      badge: 'Coming Soon',
-      iconSvg: (cls = 'w-6 h-6') => <Music2 className={`${cls} text-pink-400`} />,
+      badge: 'Beta Coming Soon',
+      iconSvg: (cls = 'w-6 h-6') => (
+        <svg className={`${cls} fill-current text-rose-500`} viewBox="0 0 24 24">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.12 7.78l-4.14 1.22c-.37.11-.64.44-.64.83v5.6c0 1.34-1.12 2.43-2.5 2.43s-2.5-1.09-2.5-2.43c0-1.34 1.12-2.43 2.5-2.43.43 0 .84.11 1.2.3V8.81c0-.78.54-1.44 1.28-1.66l4.63-1.36c.46-.14.93.2.93.68v2.66c0 .4-.27.73-.64.83-.37-.09-.76-.18-1.12-.18z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'amazon',
+      name: 'Amazon Music',
+      category: 'Platform',
+      color: 'text-cyan-400',
+      bgColor: 'bg-cyan-950/30',
+      borderColor: 'border-cyan-500/40',
+      available: false,
+      badge: 'Beta Coming Soon',
+      iconSvg: (cls = 'w-6 h-6') => (
+        <svg className={`${cls} fill-current text-cyan-400`} viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5c-2.49 0-4.73-1.05-6.3-2.73-.24-.26-.22-.66.04-.9.26-.24.66-.22.9.04C8.98 14.39 10.9 15.25 13 15.25c2.1 0 4.02-.86 5.36-2.34.24-.26.64-.28.9-.04.26.24.28.64.04.9-1.57 1.68-3.81 2.73-6.3 2.73zm3-5.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-6 0c-.83 0-1.5-.67-1.5-1.5S9.17 8 10 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'jiosaavn',
+      name: 'JioSaavn (Jio Music)',
+      category: 'Platform',
+      color: 'text-teal-400',
+      bgColor: 'bg-teal-950/30',
+      borderColor: 'border-teal-500/40',
+      available: false,
+      badge: 'Beta Coming Soon',
+      iconSvg: (cls = 'w-6 h-6') => (
+        <svg className={`${cls} fill-current text-teal-400`} viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      ),
     },
     {
       id: 'soundcloud',
       name: 'SoundCloud',
-      category: 'Source',
+      category: 'Platform',
       color: 'text-orange-500',
       bgColor: 'bg-orange-950/30',
       borderColor: 'border-orange-500/40',
@@ -146,66 +181,23 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       badge: 'Coming Soon',
       iconSvg: (cls = 'w-6 h-6') => <Disc3 className={`${cls} text-orange-400`} />,
     },
-  ];
-
-  // Destination Platform List
-  const targetPlatforms: PlatformOption[] = [
-    {
-      id: 'spotify',
-      name: 'Spotify',
-      category: 'Destination',
-      color: 'text-spotify',
-      bgColor: 'bg-emerald-950/30',
-      borderColor: 'border-emerald-500/40',
-      available: true,
-      badge: 'Active & Ready',
-      iconSvg: (cls = 'w-6 h-6') => (
-        <svg className={`${cls} fill-current text-spotify`} viewBox="0 0 24 24">
-          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.527 17.306a.82.82 0 0 1-1.127.273c-3.08-1.884-6.958-2.31-11.522-1.267a.82.82 0 1 1-.366-1.599c5.006-1.144 9.29-.661 12.742 1.466a.82.82 0 0 1 .273 1.127zm1.611-3.585a1.025 1.025 0 0 1-1.41.338c-3.524-2.166-8.898-2.793-13.064-1.529a1.025 1.025 0 1 1-.595-1.962c4.757-1.444 10.678-.748 14.73 1.743a1.025 1.025 0 0 1 .339 1.41zm.143-3.738C15.06 7.472 8.643 7.26 4.938 8.384a1.23 1.23 0 0 1-.722-2.353c4.256-1.292 11.341-1.045 15.986 1.71a1.23 1.23 0 1 1-1.281 2.097z" />
-        </svg>
-      ),
-    },
-    {
-      id: 'youtube',
-      name: 'YouTube Music',
-      category: 'Destination',
-      color: 'text-red-500',
-      bgColor: 'bg-red-950/30',
-      borderColor: 'border-red-500/40',
-      available: true,
-      badge: 'Active & Ready',
-      iconSvg: (cls = 'w-6 h-6') => (
-        <svg className={`${cls} fill-current text-red-500`} viewBox="0 0 24 24">
-          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-        </svg>
-      ),
-    },
-    {
-      id: 'apple',
-      name: 'Apple Music',
-      category: 'Destination',
-      color: 'text-pink-500',
-      bgColor: 'bg-pink-950/30',
-      borderColor: 'border-pink-500/40',
-      available: false,
-      badge: 'Coming Soon',
-      iconSvg: (cls = 'w-6 h-6') => <Music2 className={`${cls} text-pink-400`} />,
-    },
     {
       id: 'tidal',
       name: 'Tidal',
-      category: 'Destination',
-      color: 'text-cyan-400',
-      bgColor: 'bg-cyan-950/30',
-      borderColor: 'border-cyan-500/40',
+      category: 'Platform',
+      color: 'text-sky-400',
+      bgColor: 'bg-sky-950/30',
+      borderColor: 'border-sky-500/40',
       available: false,
       badge: 'Coming Soon',
-      iconSvg: (cls = 'w-6 h-6') => <Disc3 className={`${cls} text-cyan-400`} />,
+      iconSvg: (cls = 'w-6 h-6') => <Radio className={`${cls} text-sky-400`} />,
     },
   ];
 
-  const sourceName = sourceId === 'youtube' ? 'YouTube Music' : 'Spotify';
-  const targetName = targetId === 'spotify' ? 'Spotify' : 'YouTube Music';
+  const sourceName =
+    platformList.find((p) => p.id === sourceId)?.name || 'YouTube Music';
+  const targetName =
+    platformList.find((p) => p.id === targetId)?.name || 'Spotify';
 
   return (
     <div className="space-y-10 max-w-5xl mx-auto px-4 py-4">
@@ -213,7 +205,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       <div className="flex items-center justify-between">
         <button
           onClick={onBackToHome}
-          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:bg-slate-800 transition shadow-sm"
+          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:bg-slate-800 transition shadow-sm cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Home</span>
@@ -249,8 +241,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {sourcePlatforms.map((p) => {
+          <div className="grid grid-cols-2 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+            {platformList.map((p) => {
               const isSelected = sourceId === p.id;
               const isRed = p.id === 'youtube';
               return (
@@ -258,7 +250,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   key={p.id}
                   onClick={() => p.available && handleSourceSelect(p.id)}
                   disabled={!p.available}
-                  className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[105px] ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[95px] ${
                     isSelected
                       ? isRed
                         ? 'border-red-500/80 bg-gradient-to-b from-red-950/40 to-slate-950 shadow-lg shadow-red-950/40 scale-[1.02]'
@@ -269,22 +261,22 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                      {p.iconSvg('w-5 h-5')}
+                    <div className="p-1.5 rounded-xl bg-slate-900 border border-slate-800">
+                      {p.iconSvg('w-4 h-4')}
                     </div>
                     {isSelected && (
                       <div
-                        className={`w-5 h-5 rounded-full text-white flex items-center justify-center ${
+                        className={`w-4 h-4 rounded-full text-white flex items-center justify-center ${
                           isRed ? 'bg-red-500' : 'bg-spotify text-black'
                         }`}
                       >
-                        <Check className="w-3 h-3 stroke-[3]" />
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white">{p.name}</p>
-                    <p className="text-[10px] text-slate-400">{p.badge}</p>
+                    <p className="text-xs font-bold text-white line-clamp-1">{p.name}</p>
+                    <p className="text-[9px] text-slate-400">{p.badge}</p>
                   </div>
                 </button>
               );
@@ -317,8 +309,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {targetPlatforms.map((p) => {
+          <div className="grid grid-cols-2 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+            {platformList.map((p) => {
               const isSelected = targetId === p.id;
               const isRed = p.id === 'youtube';
               return (
@@ -326,7 +318,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   key={p.id}
                   onClick={() => p.available && handleTargetSelect(p.id)}
                   disabled={!p.available}
-                  className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[105px] ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[95px] ${
                     isSelected
                       ? isRed
                         ? 'border-red-500/80 bg-gradient-to-b from-red-950/40 to-slate-950 shadow-lg shadow-red-950/40 scale-[1.02]'
@@ -337,22 +329,22 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                      {p.iconSvg('w-5 h-5')}
+                    <div className="p-1.5 rounded-xl bg-slate-900 border border-slate-800">
+                      {p.iconSvg('w-4 h-4')}
                     </div>
                     {isSelected && (
                       <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                        className={`w-4 h-4 rounded-full flex items-center justify-center ${
                           isRed ? 'bg-red-500 text-white' : 'bg-spotify text-black'
                         }`}
                       >
-                        <Check className="w-3 h-3 stroke-[3]" />
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white">{p.name}</p>
-                    <p className="text-[10px] text-slate-400">{p.badge}</p>
+                    <p className="text-xs font-bold text-white line-clamp-1">{p.name}</p>
+                    <p className="text-[9px] text-slate-400">{p.badge}</p>
                   </div>
                 </button>
               );
@@ -468,12 +460,12 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                     <p className="text-xs font-semibold text-white">
                       {authStatus?.youtube?.channelTitle || 'Authorized Channel'}
                     </p>
-                    <p className="text-[11px] text-slate-400">Scope: Read & Playlist Creation</p>
+                    <p className="text-[11px] text-slate-400">Scope: Read & Playlist Management</p>
                   </div>
                 </div>
                 <button
                   onClick={() => onLogout('youtube')}
-                  className="text-xs text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800/50 transition"
+                  className="text-xs text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800/50 transition cursor-pointer"
                   title="Disconnect YouTube"
                 >
                   <LogOut className="w-4 h-4" />
@@ -491,7 +483,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             {!isYouTubeConnected ? (
               <a
                 href="/api/auth/youtube"
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm transition-all shadow-lg shadow-red-950/40 group"
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm transition-all shadow-lg shadow-red-950/40 group cursor-pointer"
               >
                 <span>Connect YouTube Account</span>
                 <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -579,7 +571,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                 </div>
                 <button
                   onClick={() => onLogout('spotify')}
-                  className="text-xs text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800/50 transition"
+                  className="text-xs text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800/50 transition cursor-pointer"
                   title="Disconnect Spotify"
                 >
                   <LogOut className="w-4 h-4" />
@@ -597,7 +589,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             {!isSpotifyConnected ? (
               <a
                 href="/api/auth/spotify"
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-spotify hover:bg-spotify-accent text-black font-semibold text-sm transition-all shadow-lg shadow-emerald-950/40 group"
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-spotify hover:bg-spotify-accent text-black font-semibold text-sm transition-all shadow-lg shadow-emerald-950/40 group cursor-pointer"
               >
                 <span>Connect Spotify Account</span>
                 <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

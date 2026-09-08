@@ -1,4 +1,11 @@
-export type PlatformId = 'youtube' | 'spotify' | 'apple' | 'soundcloud' | 'tidal';
+export type PlatformId =
+  | 'youtube'
+  | 'spotify'
+  | 'apple'
+  | 'amazon'
+  | 'jiosaavn'
+  | 'soundcloud'
+  | 'tidal';
 
 export interface GenericPlaylist {
   id: string;

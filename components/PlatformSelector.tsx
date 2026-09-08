@@ -225,7 +225,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       return;
     }
 
-    // Open connection dialog for Apple, JioSaavn, SoundCloud, Tidal
+    // Open connection dialog for Apple, JioSaavn, Tidal
     setDialogPlatform(platformId);
   };
 

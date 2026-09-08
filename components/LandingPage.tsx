@@ -66,9 +66,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <span className="px-3 py-1 rounded-full bg-teal-950/30 border border-teal-500/30 text-teal-400 font-medium flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400" /> JioSaavn / Jio Music
           </span>
-          <span className="px-3 py-1 rounded-full bg-sky-950/30 border border-sky-500/30 text-sky-400 font-medium flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-400" /> Tidal
-          </span>
         </div>
       </section>
 

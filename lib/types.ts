@@ -2,8 +2,7 @@ export type PlatformId =
   | 'youtube'
   | 'spotify'
   | 'amazon'
-  | 'jiosaavn'
-  | 'tidal';
+  | 'jiosaavn';
 
 export interface GenericPlaylist {
   id: string;
@@ -143,7 +142,6 @@ export interface PlatformAuthStatus {
   youtube: PlatformAccountDetails;
   amazon?: PlatformAccountDetails;
   jiosaavn?: PlatformAccountDetails;
-  tidal?: PlatformAccountDetails;
   isDemoMode: boolean;
 }
 

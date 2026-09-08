@@ -7,7 +7,6 @@ import {
 import {
   MOCK_AMAZON_PLAYLISTS,
   MOCK_JIOSAAVN_PLAYLISTS,
-  MOCK_TIDAL_PLAYLISTS,
   COMMON_TEST_TRACKS,
   searchMockUniversal,
 } from './mock-data';
@@ -90,18 +89,6 @@ export const PLATFORMS_CONFIG: Record<PlatformId, PlatformConfig> = {
     defaultScopes: 'jiosaavn:playlist:read-write',
     connectUrl: '/api/auth/jiosaavn',
   },
-  tidal: {
-    id: 'tidal',
-    name: 'Tidal',
-    tagline: 'TIDAL HiFi Masters & Playlists',
-    color: 'text-sky-400',
-    bgColor: 'bg-sky-950/30',
-    borderColor: 'border-sky-500/40',
-    badge: 'Active & Ready',
-    available: true,
-    defaultScopes: 'tidal:playlists:read-write',
-    connectUrl: '/api/auth/tidal',
-  },
 };
 
 /**
@@ -123,9 +110,6 @@ export async function fetchPlatformPlaylists(
   }
   if (platform === 'jiosaavn') {
     return MOCK_JIOSAAVN_PLAYLISTS;
-  }
-  if (platform === 'tidal') {
-    return MOCK_TIDAL_PLAYLISTS;
   }
   return [];
 }
@@ -264,7 +248,6 @@ export async function createPlatformPlaylist(
   else if (platform === 'spotify') url = `https://open.spotify.com/playlist/${fakeId}`;
   else if (platform === 'amazon') url = `https://music.amazon.com/playlists/${fakeId}`;
   else if (platform === 'jiosaavn') url = `https://www.jiosaavn.com/featured/${fakeId}`;
-  else if (platform === 'tidal') url = `https://tidal.com/playlist/${fakeId}`;
 
   return { id: fakeId, url };
 }

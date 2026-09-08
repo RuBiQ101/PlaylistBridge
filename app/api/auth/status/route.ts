@@ -33,12 +33,6 @@ export async function GET() {
         userId: session.jiosaavn?.userId,
         avatarUrl: session.jiosaavn?.avatarUrl,
       },
-      tidal: {
-        connected: !!session.tidal?.accessToken,
-        displayName: session.tidal?.displayName,
-        userId: session.tidal?.userId,
-        avatarUrl: session.tidal?.avatarUrl,
-      },
       isDemoMode: !!session.isDemoMode,
     };
 

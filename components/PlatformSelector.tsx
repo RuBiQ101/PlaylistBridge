@@ -131,17 +131,6 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
         </svg>
       ),
     },
-    {
-      id: 'tidal',
-      name: 'Tidal',
-      category: 'Platform',
-      color: 'text-sky-400',
-      bgColor: 'bg-sky-950/30',
-      borderColor: 'border-sky-500/40',
-      available: true,
-      badge: 'Active & Ready',
-      iconSvg: (cls = 'w-6 h-6') => <Radio className={`${cls} text-sky-400`} />,
-    },
   ];
 
   const sourceConfig =
@@ -210,7 +199,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       return;
     }
 
-    // Open connection dialog for JioSaavn, Tidal
+    // Open connection dialog for JioSaavn
     setDialogPlatform(platformId);
   };
 
@@ -300,8 +289,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
 
               <div className="flex items-center gap-1">
                 {(platformId === 'amazon' ||
-                  platformId === 'jiosaavn' ||
-                  platformId === 'tidal') && (
+                  platformId === 'jiosaavn') && (
                   <button
                     onClick={() => setDialogPlatform(platformId)}
                     className="text-xs text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition cursor-pointer"
@@ -338,9 +326,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   ? 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/40'
                   : platformId === 'amazon'
                   ? 'bg-cyan-600 hover:bg-cyan-500 text-black shadow-cyan-950/40'
-                  : platformId === 'jiosaavn'
-                  ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-teal-950/40'
-                  : 'bg-sky-600 hover:bg-sky-500 text-white shadow-sky-950/40'
+                  : 'bg-teal-600 hover:bg-teal-500 text-white shadow-teal-950/40'
               }`}
             >
               <span>Connect {cfg.name} Account</span>

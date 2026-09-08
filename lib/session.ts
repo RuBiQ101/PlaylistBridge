@@ -20,7 +20,6 @@ export interface SessionData {
   youtube?: AccountSessionInfo;
   amazon?: AccountSessionInfo;
   jiosaavn?: AccountSessionInfo;
-  tidal?: AccountSessionInfo;
   isDemoMode?: boolean;
 }
 
@@ -85,7 +84,6 @@ export async function getSession(): Promise<SessionData> {
     youtube: globalSession.youtube || cookieSession?.youtube,
     amazon: globalSession.amazon || cookieSession?.amazon,
     jiosaavn: globalSession.jiosaavn || cookieSession?.jiosaavn,
-    tidal: globalSession.tidal || cookieSession?.tidal,
     isDemoMode: globalSession.isDemoMode || cookieSession?.isDemoMode || false,
   };
 

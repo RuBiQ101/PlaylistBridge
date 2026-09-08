@@ -354,20 +354,6 @@ export const MOCK_JIOSAAVN_PLAYLISTS: GenericPlaylist[] = [
   },
 ];
 
-// ======================= TIDAL =======================
-export const MOCK_TIDAL_PLAYLISTS: GenericPlaylist[] = [
-  {
-    id: 'td-pl-master-audio',
-    title: 'TIDAL HiFi Max Masters',
-    description: 'Lossless Master Quality Authenticated (MQA) audio tracks.',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=600&auto=format&fit=crop&q=80',
-    itemCount: 8,
-    channelTitle: 'TIDAL HiFi Masters',
-    ownerTitle: 'TIDAL',
-    platform: 'tidal',
-  },
-];
-
 // Master Map of tracks across all platforms
 export const COMMON_TEST_TRACKS: GenericTrack[] = [
   {
@@ -455,7 +441,6 @@ export function searchMockUniversal(
         else if (targetPlatform === 'youtube') platformUrl = `https://music.youtube.com/watch?v=${item.id}`;
         else if (targetPlatform === 'amazon') platformUrl = `https://music.amazon.com/tracks/${item.id}`;
         else if (targetPlatform === 'jiosaavn') platformUrl = `https://www.jiosaavn.com/song/${item.id}`;
-        else if (targetPlatform === 'tidal') platformUrl = `https://tidal.com/track/${item.id}`;
 
         return {
           track: {
@@ -483,7 +468,6 @@ export function searchMockUniversal(
   else if (targetPlatform === 'youtube') platformUrl = `https://music.youtube.com/watch?v=${genId}`;
   else if (targetPlatform === 'amazon') platformUrl = `https://music.amazon.com/tracks/${genId}`;
   else if (targetPlatform === 'jiosaavn') platformUrl = `https://www.jiosaavn.com/song/${genId}`;
-  else if (targetPlatform === 'tidal') platformUrl = `https://tidal.com/track/${genId}`;
 
   return {
     track: {

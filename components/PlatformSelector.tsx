@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CheckCircle2,
   XCircle,
@@ -12,6 +12,7 @@ import {
   Check,
   Disc3,
   Radio,
+  Loader2,
 } from 'lucide-react';
 import { PlatformAccountDetails, PlatformAuthStatus, PlatformId } from '@/lib/types';
 import { PLATFORMS_CONFIG } from '@/lib/platforms';
@@ -25,6 +26,8 @@ interface PlatformSelectorProps {
   onBackToHome: () => void;
   onLogout: (platform: string) => void;
   onRefreshAuth?: () => void;
+  onSourceChange?: (id: PlatformId) => void;
+  onTargetChange?: (id: PlatformId) => void;
 }
 
 interface PlatformOption {
@@ -47,9 +50,22 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   onProceed,
   onBackToHome,
   onLogout,
+  onRefreshAuth,
+  onSourceChange,
+  onTargetChange,
 }) => {
   const [sourceId, setSourceId] = useState<PlatformId>(selectedSource);
   const [targetId, setTargetId] = useState<PlatformId>(selectedTarget);
+  const [connectingPlatform, setConnectingPlatform] = useState<PlatformId | null>(null);
+
+  // Sync state if props change from parent
+  useEffect(() => {
+    setSourceId(selectedSource);
+  }, [selectedSource]);
+
+  useEffect(() => {
+    setTargetId(selectedTarget);
+  }, [selectedTarget]);
 
   // Platform Definitions with icons
   const platformList: PlatformOption[] = [
@@ -176,25 +192,59 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   // Swap Source and Destination
   const handleSwap = () => {
     const oldSource = sourceId;
-    setSourceId(targetId);
+    const oldTarget = targetId;
+    setSourceId(oldTarget);
     setTargetId(oldSource);
+    onSourceChange?.(oldTarget);
+    onTargetChange?.(oldSource);
   };
 
   // Handle Source Select
   const handleSourceSelect = (id: PlatformId) => {
     setSourceId(id);
+    onSourceChange?.(id);
     if (id === targetId) {
       const alt = platformList.find((p) => p.id !== id)?.id || 'spotify';
       setTargetId(alt);
+      onTargetChange?.(alt);
     }
   };
 
   // Handle Target Select
   const handleTargetSelect = (id: PlatformId) => {
     setTargetId(id);
+    onTargetChange?.(id);
     if (id === sourceId) {
       const alt = platformList.find((p) => p.id !== id)?.id || 'youtube';
       setSourceId(alt);
+      onSourceChange?.(alt);
+    }
+  };
+
+  // Handle in-place connect without full-page reloads
+  const handleConnect = async (platformId: PlatformId) => {
+    const cfg = PLATFORMS_CONFIG[platformId];
+    if (!cfg) return;
+
+    if (platformId === 'youtube' || platformId === 'spotify') {
+      // Official OAuth requires top-level redirect
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('playlistbridge_source', sourceId);
+        localStorage.setItem('playlistbridge_target', targetId);
+        window.location.href = cfg.connectUrl;
+      }
+      return;
+    }
+
+    // Direct in-place connect for Apple, Amazon, JioSaavn, SoundCloud, Tidal
+    setConnectingPlatform(platformId);
+    try {
+      await fetch(cfg.connectUrl);
+      onRefreshAuth?.();
+    } catch (e) {
+      console.error('Failed to connect platform', e);
+    } finally {
+      setConnectingPlatform(null);
     }
   };
 
@@ -206,6 +256,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     const cfg = PLATFORMS_CONFIG[platformId] || PLATFORMS_CONFIG.youtube;
     const accountDetails = getAccountForPlatform(platformId);
     const isConnected = !!accountDetails?.connected;
+    const isConnecting = connectingPlatform === platformId;
 
     return (
       <div
@@ -298,10 +349,13 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
         {/* Action Buttons */}
         <div className="pt-6">
           {!isConnected ? (
-            <a
-              href={cfg.connectUrl}
+            <button
+              onClick={() => handleConnect(platformId)}
+              disabled={isConnecting}
               className={`w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-sm transition-all shadow-lg group cursor-pointer ${
-                platformId === 'youtube'
+                isConnecting
+                  ? 'bg-slate-800 text-slate-400 cursor-wait'
+                  : platformId === 'youtube'
                   ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/40'
                   : platformId === 'spotify'
                   ? 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/40'
@@ -316,9 +370,18 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   : 'bg-sky-600 hover:bg-sky-500 text-white shadow-sky-950/40'
               }`}
             >
-              <span>Connect {cfg.name} Account</span>
-              <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </a>
+              {isConnecting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Connecting {cfg.name}...</span>
+                </>
+              ) : (
+                <>
+                  <span>Connect {cfg.name} Account</span>
+                  <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </>
+              )}
+            </button>
           ) : (
             <div className="text-center py-1">
               <span className="text-xs text-emerald-400/90 font-medium">

@@ -22,7 +22,7 @@ export default function Home() {
   const [authStatus, setAuthStatus] = useState<PlatformAuthStatus | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
 
-  // Platform transfer direction
+  // Platform transfer direction with persistent state
   const [sourcePlatform, setSourcePlatform] = useState<PlatformId>('youtube');
   const [targetPlatform, setTargetPlatform] = useState<PlatformId>('spotify');
 
@@ -37,6 +37,44 @@ export default function Home() {
   const [isMigrationComplete, setIsMigrationComplete] = useState<boolean>(false);
   const [targetResultUrl, setTargetResultUrl] = useState<string | undefined>();
   const [targetResultId, setTargetResultId] = useState<string | undefined>();
+
+  // Restore saved source and target platforms from localStorage and URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSource = localStorage.getItem('playlistbridge_source') as PlatformId;
+      const savedTarget = localStorage.getItem('playlistbridge_target') as PlatformId;
+      if (savedSource) setSourcePlatform(savedSource);
+      if (savedTarget) setTargetPlatform(savedTarget);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlSource = urlParams.get('source') as PlatformId;
+      const urlTarget = urlParams.get('target') as PlatformId;
+      const connected = urlParams.get('connected');
+
+      if (urlSource) setSourcePlatform(urlSource);
+      if (urlTarget) setTargetPlatform(urlTarget);
+
+      if (connected || urlParams.get('auth_error')) {
+        setViewMode('platforms');
+        // Clean URL to avoid stale params on future refreshes
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, []);
+
+  const handleSourceChange = (newSource: PlatformId) => {
+    setSourcePlatform(newSource);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playlistbridge_source', newSource);
+    }
+  };
+
+  const handleTargetChange = (newTarget: PlatformId) => {
+    setTargetPlatform(newTarget);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playlistbridge_target', newTarget);
+    }
+  };
 
   // Load Auth Status from API
   const fetchAuthStatus = useCallback(async () => {
@@ -57,16 +95,6 @@ export default function Home() {
   useEffect(() => {
     fetchAuthStatus();
   }, [fetchAuthStatus]);
-
-  // Handle URL params if returning from OAuth
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('connected') || urlParams.get('auth_error')) {
-        setViewMode('platforms');
-      }
-    }
-  }, []);
 
   // Home Return Handler for Logo
   const handleGoHome = () => {
@@ -96,8 +124,8 @@ export default function Home() {
 
   // Proceed from Platform Direction Selector
   const handleProceedPlatforms = (source: PlatformId, target: PlatformId) => {
-    setSourcePlatform(source);
-    setTargetPlatform(target);
+    handleSourceChange(source);
+    handleTargetChange(target);
     setViewMode('playlists');
   };
 
@@ -188,6 +216,8 @@ export default function Home() {
             onBackToHome={() => setViewMode('landing')}
             onLogout={handlePlatformLogout}
             onRefreshAuth={fetchAuthStatus}
+            onSourceChange={handleSourceChange}
+            onTargetChange={handleTargetChange}
           />
         )}
 

@@ -71,6 +71,20 @@ export interface YouTubeTrackResult {
   durationDiffSec?: number;
 }
 
+export interface GenericTrackResult {
+  id: string;
+  name: string;
+  artist: string;
+  albumName?: string;
+  thumbnailUrl?: string;
+  durationSec: number;
+  durationMs?: number;
+  url: string;
+  uri?: string;
+  platform?: PlatformId;
+  durationDiffSec?: number;
+}
+
 export type TrackMatchStatus = 'MATCHED' | 'UNMATCHED' | 'SEARCHING' | 'SKIPPED' | 'ADDED';
 
 export interface TrackReconciliation {
@@ -118,18 +132,22 @@ export interface MigrationProgressEvent {
   logLevel?: 'info' | 'success' | 'warn' | 'error';
 }
 
+export interface PlatformAccountDetails {
+  connected: boolean;
+  userId?: string;
+  displayName?: string;
+  channelTitle?: string;
+  avatarUrl?: string;
+}
+
 export interface PlatformAuthStatus {
-  spotify: {
-    connected: boolean;
-    userId?: string;
-    displayName?: string;
-    avatarUrl?: string;
-  };
-  youtube: {
-    connected: boolean;
-    channelTitle?: string;
-    avatarUrl?: string;
-  };
+  spotify: PlatformAccountDetails;
+  youtube: PlatformAccountDetails;
+  apple?: PlatformAccountDetails;
+  amazon?: PlatformAccountDetails;
+  jiosaavn?: PlatformAccountDetails;
+  soundcloud?: PlatformAccountDetails;
+  tidal?: PlatformAccountDetails;
   isDemoMode: boolean;
 }
 

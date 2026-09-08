@@ -1,25 +1,28 @@
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
+import { PlatformId } from './types';
 
 const SESSION_COOKIE_NAME = 'playlistbridge_session';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'playlistbridge-default-super-secret-key-32-chars';
 
+export interface AccountSessionInfo {
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  userId?: string;
+  displayName?: string;
+  channelTitle?: string;
+  avatarUrl?: string;
+}
+
 export interface SessionData {
-  spotify?: {
-    accessToken: string;
-    refreshToken?: string;
-    expiresAt?: number;
-    userId: string;
-    displayName: string;
-    avatarUrl?: string;
-  };
-  youtube?: {
-    accessToken: string;
-    refreshToken?: string;
-    expiresAt?: number;
-    channelTitle: string;
-    avatarUrl?: string;
-  };
+  spotify?: AccountSessionInfo;
+  youtube?: AccountSessionInfo;
+  apple?: AccountSessionInfo;
+  amazon?: AccountSessionInfo;
+  jiosaavn?: AccountSessionInfo;
+  soundcloud?: AccountSessionInfo;
+  tidal?: AccountSessionInfo;
   isDemoMode?: boolean;
 }
 
@@ -78,31 +81,17 @@ export async function getSession(): Promise<SessionData> {
 
   const globalSession = global.__playlistBridgeSession || {};
 
-  // Resilient merge across localhost and 127.0.0.1
+  // Resilient merge across all platforms
   const mergedSession: SessionData = {
     spotify: globalSession.spotify || cookieSession?.spotify,
     youtube: globalSession.youtube || cookieSession?.youtube,
-    isDemoMode: false,
+    apple: globalSession.apple || cookieSession?.apple,
+    amazon: globalSession.amazon || cookieSession?.amazon,
+    jiosaavn: globalSession.jiosaavn || cookieSession?.jiosaavn,
+    soundcloud: globalSession.soundcloud || cookieSession?.soundcloud,
+    tidal: globalSession.tidal || cookieSession?.tidal,
+    isDemoMode: globalSession.isDemoMode || cookieSession?.isDemoMode || false,
   };
-
-  // If cookie session has newer active tokens, favor the newer tokens
-  if (cookieSession?.spotify?.accessToken) {
-    if (
-      !globalSession.spotify?.accessToken ||
-      (cookieSession.spotify.expiresAt || 0) >= (globalSession.spotify?.expiresAt || 0)
-    ) {
-      mergedSession.spotify = cookieSession.spotify;
-    }
-  }
-
-  if (cookieSession?.youtube?.accessToken) {
-    if (
-      !globalSession.youtube?.accessToken ||
-      (cookieSession.youtube.expiresAt || 0) >= (globalSession.youtube?.expiresAt || 0)
-    ) {
-      mergedSession.youtube = cookieSession.youtube;
-    }
-  }
 
   global.__playlistBridgeSession = mergedSession;
   return mergedSession;

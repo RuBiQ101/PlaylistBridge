@@ -1,21 +1,15 @@
 import { NextRequest } from 'next/server';
 import { getSession, saveSession } from '@/lib/session';
 import {
-  fetchPlaylistTracks as fetchYouTubePlaylistTracks,
-  fetchUserPlaylists as fetchYouTubeUserPlaylists,
-  createYouTubePlaylist,
-  searchYouTubeTrack,
-  addTracksToYouTubePlaylist,
-} from '@/lib/youtube';
+  PLATFORMS_CONFIG,
+  fetchPlatformPlaylists,
+  fetchPlatformPlaylistTracks,
+  searchPlatformTrack,
+  createPlatformPlaylist,
+  addTracksToPlatformPlaylist,
+} from '@/lib/platforms';
 import { cleanTrackMetadata } from '@/lib/normalization';
-import {
-  fetchSpotifyPlaylistTracks,
-  fetchUserSpotifyPlaylists,
-  searchSpotifyTrack,
-  createSpotifyPlaylist,
-  addTracksToSpotifyPlaylist,
-  refreshSpotifyAccessToken,
-} from '@/lib/spotify';
+import { refreshSpotifyAccessToken } from '@/lib/spotify';
 import {
   MigrationProgressEvent,
   PlatformId,
@@ -40,11 +34,18 @@ export async function GET(request: NextRequest) {
   }
 
   const session = await getSession();
-  const isDemo = session.isDemoMode || (!session.spotify?.accessToken && !session.youtube?.accessToken);
+  const isDemo =
+    session.isDemoMode ||
+    (!session[sourcePlatform]?.accessToken && !session[targetPlatform]?.accessToken);
 
-  // Auto-refresh Spotify token if expired or close to expiry (within 60s)
+  // Auto-refresh Spotify token if Spotify is involved and token is near expiry
   let spotifyAccessToken = session.spotify?.accessToken || 'demo_token';
-  if (!isDemo && session.spotify?.refreshToken && session.spotify.expiresAt) {
+  if (
+    (sourcePlatform === 'spotify' || targetPlatform === 'spotify') &&
+    !isDemo &&
+    session.spotify?.refreshToken &&
+    session.spotify.expiresAt
+  ) {
     if (Date.now() > session.spotify.expiresAt - 60000) {
       try {
         const refreshed = await refreshSpotifyAccessToken(session.spotify.refreshToken);
@@ -61,7 +62,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const youtubeAccessToken = session.youtube?.accessToken || 'demo_token';
+  const sourceConfig = PLATFORMS_CONFIG[sourcePlatform] || PLATFORMS_CONFIG.youtube;
+  const targetConfig = PLATFORMS_CONFIG[targetPlatform] || PLATFORMS_CONFIG.spotify;
+
+  const sourceAccessToken = session[sourcePlatform]?.accessToken || 'demo_token';
+  const targetAccessToken = session[targetPlatform]?.accessToken || 'demo_token';
 
   const encoder = new TextEncoder();
   const stream = new TransformStream();
@@ -77,10 +82,9 @@ export async function GET(request: NextRequest) {
     }
   };
 
-  // Run the asynchronous migration pipeline
+  // Run the universal asynchronous migration pipeline
   (async () => {
     const startTime = Date.now();
-    const isSpotifyToYouTube = sourcePlatform === 'spotify' && targetPlatform === 'youtube';
 
     try {
       // 1. Initialize Transfer
@@ -93,7 +97,7 @@ export async function GET(request: NextRequest) {
         currentIndex: 0,
         matchedCount: 0,
         unmatchedCount: 0,
-        message: `Initializing transfer pipeline (${sourcePlatform === 'spotify' ? 'Spotify ➔ YouTube Music' : 'YouTube Music ➔ Spotify'})...`,
+        message: `Initializing transfer pipeline (${sourceConfig.name} ➔ ${targetConfig.name})...`,
         logLevel: 'info',
       });
 
@@ -107,26 +111,25 @@ export async function GET(request: NextRequest) {
         currentIndex: 0,
         matchedCount: 0,
         unmatchedCount: 0,
-        message: `Fetching ${sourcePlatform === 'spotify' ? 'Spotify' : 'YouTube Music'} playlist tracks and metadata...`,
+        message: `Fetching ${sourceConfig.name} playlist tracks and audio metadata...`,
         logLevel: 'info',
       });
 
-      let sourcePlaylistTitle = customName || 'Imported Playlist';
-      let tracks: GenericTrack[] = [];
+      const allPlaylists = await fetchPlatformPlaylists(
+        sourcePlatform,
+        sourceAccessToken,
+        isDemo
+      );
+      const matchedPl = allPlaylists.find((p) => p.id === playlistId);
+      const sourcePlaylistTitle =
+        matchedPl?.title || customName || `Imported ${sourceConfig.name} Playlist`;
 
-      if (isSpotifyToYouTube) {
-        const spPlaylists = await fetchUserSpotifyPlaylists(spotifyAccessToken, isDemo);
-        const matchedPl = spPlaylists.find((p) => p.id === playlistId);
-        if (matchedPl) sourcePlaylistTitle = matchedPl.title;
-
-        tracks = await fetchSpotifyPlaylistTracks(spotifyAccessToken, playlistId, isDemo);
-      } else {
-        const ytPlaylists = await fetchYouTubeUserPlaylists(youtubeAccessToken, isDemo);
-        const matchedPl = ytPlaylists.find((p) => p.id === playlistId);
-        if (matchedPl) sourcePlaylistTitle = matchedPl.title;
-
-        tracks = await fetchYouTubePlaylistTracks(youtubeAccessToken, playlistId, isDemo);
-      }
+      const tracks: GenericTrack[] = await fetchPlatformPlaylistTracks(
+        sourcePlatform,
+        sourceAccessToken,
+        playlistId,
+        isDemo
+      );
 
       const totalTracks = tracks.length;
       let matchedCount = 0;
@@ -144,7 +147,7 @@ export async function GET(request: NextRequest) {
         currentIndex: 0,
         matchedCount: 0,
         unmatchedCount: 0,
-        message: `Found ${totalTracks} tracks in "${sourcePlaylistTitle}". Starting audio normalization and duration matching engine...`,
+        message: `Found ${totalTracks} tracks in "${sourcePlaylistTitle}". Starting audio normalization and catalog matching...`,
         logLevel: 'info',
       });
 
@@ -176,153 +179,85 @@ export async function GET(request: NextRequest) {
           logLevel: 'info',
         });
 
-        // Delay in demo mode for realistic visual feedback
+        // Realistic delay in demo mode for visualization
         if (isDemo) {
-          await new Promise((resolve) => setTimeout(resolve, 320));
+          await new Promise((resolve) => setTimeout(resolve, 280));
         }
 
-        if (isSpotifyToYouTube) {
-          // Spotify ➔ YouTube Match
-          const searchResult = await searchYouTubeTrack(
-            youtubeAccessToken,
-            cleaned.cleanedTitle,
-            cleaned.cleanedArtist,
-            track.durationSec,
-            isDemo
-          );
+        // Search track on target platform
+        const searchResult = await searchPlatformTrack(
+          targetPlatform,
+          targetAccessToken,
+          cleaned.cleanedTitle,
+          cleaned.cleanedArtist,
+          track.durationSec,
+          isDemo
+        );
 
-          if (searchResult.track) {
-            matchedCount++;
-            matchedTargetIdsOrUris.push(searchResult.track.id);
+        if (searchResult.track) {
+          matchedCount++;
+          matchedTargetIdsOrUris.push(searchResult.track.uri || searchResult.track.id);
 
-            const recon: TrackReconciliation = {
-              index,
-              sourceTrack: track,
-              cleaned,
-              status: 'MATCHED',
-              youtubeTrack: searchResult.track,
-              targetTrackTitle: searchResult.track.name,
-              targetTrackArtist: searchResult.track.artist,
-              targetTrackUrl: searchResult.track.url,
-              targetDurationDiffSec: searchResult.track.durationDiffSec,
-              timestamp: new Date().toLocaleTimeString(),
-            };
-            reconciliations.push(recon);
-
-            await sendEvent({
-              type: 'TRACK_MATCHED',
-              playlistId,
-              playlistTitle: sourcePlaylistTitle,
-              sourcePlatform,
-              targetPlatform,
-              totalTracks,
-              currentIndex: index,
-              matchedCount,
-              unmatchedCount,
-              currentTrack: recon,
-              message: `✓ Matched: "${cleaned.cleanedTitle}" ➔ YouTube: "${searchResult.track.name}" (${searchResult.track.artist})`,
-              logLevel: 'success',
-            });
-          } else {
-            unmatchedCount++;
-            const recon: TrackReconciliation = {
-              index,
-              sourceTrack: track,
-              cleaned,
-              status: 'UNMATCHED',
-              reason: searchResult.reason || 'No matching YouTube video found within duration tolerance',
-              timestamp: new Date().toLocaleTimeString(),
-            };
-            reconciliations.push(recon);
-
-            await sendEvent({
-              type: 'TRACK_UNMATCHED',
-              playlistId,
-              playlistTitle: sourcePlaylistTitle,
-              sourcePlatform,
-              targetPlatform,
-              totalTracks,
-              currentIndex: index,
-              matchedCount,
-              unmatchedCount,
-              currentTrack: recon,
-              message: `✗ Unmatched: "${track.title}" (${searchResult.reason || 'Not found'})`,
-              logLevel: 'warn',
-            });
-          }
-        } else {
-          // YouTube ➔ Spotify Match
-          const searchResult = await searchSpotifyTrack(
-            spotifyAccessToken,
+          const recon: TrackReconciliation = {
+            index,
+            sourceTrack: track,
             cleaned,
-            isDemo
-          );
+            status: 'MATCHED',
+            targetTrackTitle: searchResult.track.name,
+            targetTrackArtist: searchResult.track.artist,
+            targetTrackUrl: searchResult.track.url,
+            targetDurationDiffSec: searchResult.track.durationDiffSec,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          reconciliations.push(recon);
 
-          if (searchResult.track) {
-            matchedCount++;
-            matchedTargetIdsOrUris.push(searchResult.track.uri);
+          await sendEvent({
+            type: 'TRACK_MATCHED',
+            playlistId,
+            playlistTitle: sourcePlaylistTitle,
+            sourcePlatform,
+            targetPlatform,
+            totalTracks,
+            currentIndex: index,
+            matchedCount,
+            unmatchedCount,
+            currentTrack: recon,
+            message: `✓ Matched: "${cleaned.cleanedTitle}" ➔ ${targetConfig.name}: "${searchResult.track.name}" (${searchResult.track.artist})`,
+            logLevel: 'success',
+          });
+        } else {
+          unmatchedCount++;
+          const recon: TrackReconciliation = {
+            index,
+            sourceTrack: track,
+            cleaned,
+            status: 'UNMATCHED',
+            reason:
+              searchResult.reason ||
+              `No matching track found on ${targetConfig.name} within duration tolerance`,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          reconciliations.push(recon);
 
-            const recon: TrackReconciliation = {
-              index,
-              sourceTrack: track,
-              cleaned,
-              status: 'MATCHED',
-              spotifyTrack: searchResult.track,
-              targetTrackTitle: searchResult.track.name,
-              targetTrackArtist: searchResult.track.artist,
-              targetTrackUrl: searchResult.track.spotifyUrl,
-              targetDurationDiffSec: searchResult.track.durationDiffSec,
-              timestamp: new Date().toLocaleTimeString(),
-            };
-            reconciliations.push(recon);
-
-            await sendEvent({
-              type: 'TRACK_MATCHED',
-              playlistId,
-              playlistTitle: sourcePlaylistTitle,
-              sourcePlatform,
-              targetPlatform,
-              totalTracks,
-              currentIndex: index,
-              matchedCount,
-              unmatchedCount,
-              currentTrack: recon,
-              message: `✓ Matched: "${cleaned.cleanedTitle}" ➔ Spotify: "${searchResult.track.name}" (${searchResult.track.artist})`,
-              logLevel: 'success',
-            });
-          } else {
-            unmatchedCount++;
-            const recon: TrackReconciliation = {
-              index,
-              sourceTrack: track,
-              cleaned,
-              status: 'UNMATCHED',
-              reason: searchResult.reason || 'No matching Spotify track found within duration tolerance',
-              timestamp: new Date().toLocaleTimeString(),
-            };
-            reconciliations.push(recon);
-
-            await sendEvent({
-              type: 'TRACK_UNMATCHED',
-              playlistId,
-              playlistTitle: sourcePlaylistTitle,
-              sourcePlatform,
-              targetPlatform,
-              totalTracks,
-              currentIndex: index,
-              matchedCount,
-              unmatchedCount,
-              currentTrack: recon,
-              message: `✗ Unmatched: "${track.title}" (${searchResult.reason || 'Not found'})`,
-              logLevel: 'warn',
-            });
-          }
+          await sendEvent({
+            type: 'TRACK_UNMATCHED',
+            playlistId,
+            playlistTitle: sourcePlaylistTitle,
+            sourcePlatform,
+            targetPlatform,
+            totalTracks,
+            currentIndex: index,
+            matchedCount,
+            unmatchedCount,
+            currentTrack: recon,
+            message: `✗ Unmatched: "${track.title}" (${searchResult.reason || 'Not found'})`,
+            logLevel: 'warn',
+          });
         }
       }
 
-      // 4. Create Target Playlist
+      // 4. Create Target Playlist on Target Platform
       const targetPlaylistName = customName || `[Migrated] ${sourcePlaylistTitle}`;
-      const targetPlatformName = isSpotifyToYouTube ? 'YouTube Music' : 'Spotify';
 
       await sendEvent({
         type: 'CREATING_TARGET_PLAYLIST',
@@ -334,28 +269,18 @@ export async function GET(request: NextRequest) {
         currentIndex: totalTracks,
         matchedCount,
         unmatchedCount,
-        message: `Creating ${targetPlatformName} playlist "${targetPlaylistName}"...`,
+        message: `Creating ${targetConfig.name} playlist "${targetPlaylistName}"...`,
         logLevel: 'info',
       });
 
-      let targetPlaylistResult: { id: string; url: string };
-
-      if (isSpotifyToYouTube) {
-        targetPlaylistResult = await createYouTubePlaylist(
-          youtubeAccessToken,
-          targetPlaylistName,
-          `Migrated from Spotify playlist "${sourcePlaylistTitle}" with PlaylistBridge on ${new Date().toLocaleDateString()}`,
-          isDemo
-        );
-      } else {
-        targetPlaylistResult = await createSpotifyPlaylist(
-          spotifyAccessToken,
-          session.spotify?.userId || 'demo_user',
-          targetPlaylistName,
-          `Migrated from YouTube Music playlist "${sourcePlaylistTitle}" with PlaylistBridge on ${new Date().toLocaleDateString()}`,
-          isDemo
-        );
-      }
+      const targetPlaylistResult = await createPlatformPlaylist(
+        targetPlatform,
+        targetAccessToken,
+        session[targetPlatform]?.userId || 'demo_user',
+        targetPlaylistName,
+        `Migrated from ${sourceConfig.name} playlist "${sourcePlaylistTitle}" with PlaylistBridge on ${new Date().toLocaleDateString()}`,
+        isDemo
+      );
 
       // 5. Batch Add Tracks to Target Playlist
       if (matchedTargetIdsOrUris.length > 0) {
@@ -373,25 +298,17 @@ export async function GET(request: NextRequest) {
           targetPlaylistUrl: targetPlaylistResult.url,
           spotifyPlaylistId: targetPlaylistResult.id,
           spotifyPlaylistUrl: targetPlaylistResult.url,
-          message: `Adding ${matchedTargetIdsOrUris.length} tracks to ${targetPlatformName} playlist...`,
+          message: `Adding ${matchedTargetIdsOrUris.length} tracks to ${targetConfig.name} playlist...`,
           logLevel: 'info',
         });
 
-        if (isSpotifyToYouTube) {
-          await addTracksToYouTubePlaylist(
-            youtubeAccessToken,
-            targetPlaylistResult.id,
-            matchedTargetIdsOrUris,
-            isDemo
-          );
-        } else {
-          await addTracksToSpotifyPlaylist(
-            spotifyAccessToken,
-            targetPlaylistResult.id,
-            matchedTargetIdsOrUris,
-            isDemo
-          );
-        }
+        await addTracksToPlatformPlaylist(
+          targetPlatform,
+          targetAccessToken,
+          targetPlaylistResult.id,
+          matchedTargetIdsOrUris,
+          isDemo
+        );
       }
 
       // 6. Complete
@@ -410,7 +327,7 @@ export async function GET(request: NextRequest) {
         targetPlaylistUrl: targetPlaylistResult.url,
         spotifyPlaylistId: targetPlaylistResult.id,
         spotifyPlaylistUrl: targetPlaylistResult.url,
-        message: `Migration completed in ${(elapsedMs / 1000).toFixed(1)}s! Successfully created ${targetPlatformName} playlist with ${matchedCount} matched tracks.`,
+        message: `Migration completed in ${(elapsedMs / 1000).toFixed(1)}s! Successfully created ${targetConfig.name} playlist with ${matchedCount} matched tracks.`,
         logLevel: 'success',
       });
     } catch (err: any) {

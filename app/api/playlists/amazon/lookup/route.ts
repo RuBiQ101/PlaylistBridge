@@ -8,21 +8,70 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
     const body = await request.json().catch(() => ({}));
-    const { urlOrId } = body;
+    const targetInput =
+      body.urlOrId ||
+      body.url ||
+      body.link ||
+      body.id ||
+      body.playlistUrl ||
+      body.query ||
+      body.input;
 
-    if (!urlOrId) {
-      return NextResponse.json({ error: 'Please provide a playlist URL or ID' }, { status: 400 });
+    if (!targetInput) {
+      return NextResponse.json(
+        { error: 'Please provide a playlist URL or ID' },
+        { status: 400 }
+      );
     }
 
     const playlist = await fetchPlatformPlaylistById(
       'amazon',
       session.amazon?.accessToken || 'demo_token',
-      urlOrId,
+      targetInput,
       true
     );
 
     return NextResponse.json({ playlist });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Lookup failed' }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Lookup failed' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getSession();
+    const searchParams = request.nextUrl.searchParams;
+    const targetInput =
+      searchParams.get('urlOrId') ||
+      searchParams.get('url') ||
+      searchParams.get('link') ||
+      searchParams.get('id') ||
+      searchParams.get('playlistUrl') ||
+      searchParams.get('query') ||
+      searchParams.get('input');
+
+    if (!targetInput) {
+      return NextResponse.json(
+        { error: 'Please provide a playlist URL or ID parameter' },
+        { status: 400 }
+      );
+    }
+
+    const playlist = await fetchPlatformPlaylistById(
+      'amazon',
+      session.amazon?.accessToken || 'demo_token',
+      targetInput,
+      true
+    );
+
+    return NextResponse.json({ playlist });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Lookup failed' },
+      { status: 500 }
+    );
   }
 }

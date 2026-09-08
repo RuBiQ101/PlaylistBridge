@@ -7,7 +7,6 @@ import {
   ArrowRight,
   ArrowLeft,
   RefreshCw,
-  Sparkles,
   ListMusic,
   Edit3,
   Link,
@@ -15,19 +14,23 @@ import {
   Plus,
   Loader2,
 } from 'lucide-react';
-import { YouTubePlaylist } from '@/lib/types';
+import { GenericPlaylist, PlatformId } from '@/lib/types';
 
 interface StepSelectPlaylistProps {
+  sourcePlatform?: PlatformId;
+  targetPlatform?: PlatformId;
   onBack: () => void;
-  onSelectAndStart: (playlist: YouTubePlaylist, customName: string) => void;
+  onSelectAndStart: (playlist: GenericPlaylist, customName: string) => void;
 }
 
 export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
+  sourcePlatform = 'youtube',
+  targetPlatform = 'spotify',
   onBack,
   onSelectAndStart,
 }) => {
-  const [playlists, setPlaylists] = useState<YouTubePlaylist[]>([]);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<YouTubePlaylist | null>(null);
+  const [playlists, setPlaylists] = useState<GenericPlaylist[]>([]);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<GenericPlaylist | null>(null);
   const [customName, setCustomName] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -38,14 +41,19 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
   const [isImportingUrl, setIsImportingUrl] = useState<boolean>(false);
   const [importError, setImportError] = useState<string | null>(null);
 
+  const isSpotifySource = sourcePlatform === 'spotify';
+  const sourceName = isSpotifySource ? 'Spotify' : 'YouTube Music';
+  const targetName = targetPlatform === 'youtube' ? 'YouTube Music' : 'Spotify';
+
   const fetchPlaylists = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/playlists/youtube');
+      const endpoint = isSpotifySource ? '/api/playlists/spotify' : '/api/playlists/youtube';
+      const res = await fetch(endpoint);
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Failed to load playlists');
+        throw new Error(err.error || `Failed to load ${sourceName} playlists`);
       }
       const data = await res.json();
       setPlaylists(data.playlists || []);
@@ -62,9 +70,9 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
 
   useEffect(() => {
     fetchPlaylists();
-  }, []);
+  }, [sourcePlatform]);
 
-  const handleSelect = (playlist: YouTubePlaylist) => {
+  const handleSelect = (playlist: GenericPlaylist) => {
     setSelectedPlaylist(playlist);
     setCustomName(`[Migrated] ${playlist.title}`);
   };
@@ -76,7 +84,11 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
     setIsImportingUrl(true);
     setImportError(null);
     try {
-      const res = await fetch('/api/playlists/youtube/lookup', {
+      const endpoint = isSpotifySource
+        ? '/api/playlists/spotify/lookup'
+        : '/api/playlists/youtube/lookup';
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ urlOrId: urlInput.trim() }),
@@ -84,12 +96,11 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Could not find YouTube playlist');
+        throw new Error(err.error || `Could not find ${sourceName} playlist`);
       }
 
       const data = await res.json();
       if (data.playlist) {
-        // Prepend to playlists if not already in list
         setPlaylists((prev) => {
           const exists = prev.some((p) => p.id === data.playlist.id);
           return exists ? prev : [data.playlist, ...prev];
@@ -114,37 +125,46 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs font-medium mb-2">
-            <ListMusic className="w-4 h-4 text-youtube" />
+            <ListMusic
+              className={`w-4 h-4 ${isSpotifySource ? 'text-spotify' : 'text-youtube'}`}
+            />
             <span>Step 2 of 4 • Select Source Playlist</span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            Choose a YouTube Playlist
+            Choose a {sourceName} Playlist
           </h1>
           <p className="text-slate-400 text-sm">
-            Select from your library or paste any YouTube Music link (Recaps, Mixes, Liked Music).
+            Select from your {sourceName} library or paste any playlist link to transfer to{' '}
+            {targetName}.
           </p>
         </div>
 
         <button
           onClick={fetchPlaylists}
           disabled={isLoading}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 text-slate-300 text-xs font-medium transition"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 text-slate-300 text-xs font-medium transition cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span>Refresh Playlists</span>
         </button>
       </div>
 
-      {/* Paste Playlist / Mix / Recap URL Bar */}
+      {/* Paste Playlist URL Bar */}
       <div className="p-4 rounded-2xl glass-panel border border-slate-800 bg-gradient-to-r from-slate-900/80 to-slate-950/80 space-y-3">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <Link className="w-3.5 h-3.5 text-spotify" />
-          <span>Import Any YouTube Music Link, Mix, or Recap</span>
+          <Link
+            className={`w-3.5 h-3.5 ${isSpotifySource ? 'text-spotify' : 'text-red-400'}`}
+          />
+          <span>Import Any {sourceName} Link or ID</span>
         </div>
         <form onSubmit={handleImportByUrl} className="flex gap-2">
           <input
             type="text"
-            placeholder="Paste YouTube Music playlist link or ID (e.g., https://music.youtube.com/playlist?list=...)"
+            placeholder={
+              isSpotifySource
+                ? 'Paste Spotify playlist URL or URI (e.g., https://open.spotify.com/playlist/...)'
+                : 'Paste YouTube Music playlist link or ID (e.g., https://music.youtube.com/playlist?list=...)'
+            }
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             className="flex-1 px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-spotify"
@@ -152,7 +172,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
           <button
             type="submit"
             disabled={isImportingUrl || !urlInput.trim()}
-            className="px-4 py-2.5 rounded-xl bg-spotify hover:bg-spotify-accent text-black font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl bg-spotify hover:bg-spotify-accent text-black font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
           >
             {isImportingUrl ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -170,7 +190,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
         <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
         <input
           type="text"
-          placeholder="Filter playlists by title..."
+          placeholder={`Filter ${sourceName} playlists by title...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-spotify/60 focus:ring-1 focus:ring-spotify/60 transition"
@@ -183,7 +203,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
           <span>{error}</span>
           <button
             onClick={fetchPlaylists}
-            className="px-3 py-1 bg-red-900/50 hover:bg-red-800/50 rounded-lg text-xs font-semibold"
+            className="px-3 py-1 bg-red-900/50 hover:bg-red-800/50 rounded-lg text-xs font-semibold cursor-pointer"
           >
             Retry
           </button>
@@ -216,7 +236,11 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredPlaylists.map((pl) => {
             const isSelected = selectedPlaylist?.id === pl.id;
-            const isLikedMusic = pl.id === 'LM' || pl.id === 'LL' || pl.title.toLowerCase().includes('liked');
+            const isLikedMusic =
+              pl.id === 'LM' ||
+              pl.id === 'LL' ||
+              pl.id === 'LIKED_SONGS' ||
+              pl.title.toLowerCase().includes('liked');
 
             return (
               <div
@@ -248,7 +272,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                   {/* Item count tag */}
                   <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 border border-white/10">
                     <Music className="w-3.5 h-3.5 text-spotify" />
-                    <span>{isLikedMusic ? 'Auto Playlist' : `${pl.itemCount} tracks`}</span>
+                    <span>{isLikedMusic ? 'Auto Library' : `${pl.itemCount} tracks`}</span>
                   </div>
                 </div>
 
@@ -260,7 +284,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                     </h3>
                   </div>
                   <p className="text-xs text-slate-400 line-clamp-1">
-                    {pl.channelTitle || 'Curated Playlist'}
+                    {pl.ownerTitle || pl.channelTitle || 'Curated Playlist'}
                   </p>
                 </div>
 
@@ -282,31 +306,38 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
         <div className="p-6 rounded-2xl glass-panel border border-slate-800 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <Edit3 className="w-4 h-4 text-spotify" />
-            <span>Target Spotify Playlist Settings</span>
+            <span>Target {targetName} Playlist Settings</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
             <div>
               <label className="block text-xs text-slate-300 font-medium mb-1.5">
-                Spotify Playlist Name
+                {targetName} Playlist Name
               </label>
               <input
                 type="text"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                placeholder="Playlist name on Spotify"
+                placeholder={`Playlist name on ${targetName}`}
                 className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-spotify focus:ring-1 focus:ring-spotify"
               />
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs text-slate-400 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-600/10 border border-red-500/20 flex items-center justify-center text-red-400 font-bold shrink-0">
-                YT
+              <div
+                className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold shrink-0 ${
+                  isSpotifySource
+                    ? 'bg-emerald-600/10 border border-emerald-500/20 text-emerald-400'
+                    : 'bg-red-600/10 border border-red-500/20 text-red-400'
+                }`}
+              >
+                {isSpotifySource ? 'SP' : 'YT'}
               </div>
               <div className="overflow-hidden">
                 <p className="text-white font-semibold truncate">{selectedPlaylist.title}</p>
                 <p className="truncate text-[11px]">
-                  {selectedPlaylist.itemCount > 0 ? `${selectedPlaylist.itemCount} items • ` : ''}Will normalize titles & match duration (±12s)
+                  {selectedPlaylist.itemCount > 0 ? `${selectedPlaylist.itemCount} items • ` : ''}
+                  Duration Matching (±12s)
                 </p>
               </div>
             </div>
@@ -318,10 +349,10 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       <div className="flex items-center justify-between pt-4 border-t border-slate-800/80">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition border border-slate-800"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition border border-slate-800 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Connections</span>
+          <span>Back to Route Selection</span>
         </button>
 
         <button

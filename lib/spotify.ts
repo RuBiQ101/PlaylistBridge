@@ -1,6 +1,6 @@
-import { CleanedTrackMetadata, SpotifyTrackResult } from './types';
+import { CleanedTrackMetadata, GenericPlaylist, GenericTrack, SpotifyTrackResult } from './types';
 import { buildSpotifySearchQueries, isDurationValid } from './normalization';
-import { searchMockSpotify } from './mock-data';
+import { searchMockSpotify, MOCK_SPOTIFY_PLAYLISTS, MOCK_SPOTIFY_PLAYLIST_TRACKS } from './mock-data';
 
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '';
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
@@ -9,6 +9,8 @@ const SPOTIFY_REDIRECT_URI =
 
 export const SPOTIFY_SCOPES = [
   'playlist-read-private',
+  'playlist-read-collaborative',
+  'user-library-read',
   'playlist-modify-public',
   'playlist-modify-private',
   'user-library-modify',
@@ -130,6 +132,232 @@ export async function getSpotifyUserProfile(accessToken: string): Promise<{
 }
 
 /**
+ * Fetches user playlists from Spotify API including Liked Songs
+ */
+export async function fetchUserSpotifyPlaylists(
+  accessToken: string,
+  isDemoMode: boolean = false
+): Promise<GenericPlaylist[]> {
+  if (isDemoMode || !accessToken || accessToken === 'demo_token') {
+    return MOCK_SPOTIFY_PLAYLISTS;
+  }
+
+  let playlists: GenericPlaylist[] = [];
+
+  // 1. Try to fetch Liked Songs (user library)
+  try {
+    const likedRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=1', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (likedRes.ok) {
+      const likedData = await likedRes.json();
+      playlists.push({
+        id: 'LIKED_SONGS',
+        title: 'Liked Songs',
+        description: 'Your saved library tracks on Spotify (Auto playlist)',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+        itemCount: likedData.total || 0,
+        channelTitle: 'Spotify Auto Library',
+        ownerTitle: 'You',
+        platform: 'spotify',
+      });
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // 2. Fetch user's playlists with pagination
+  let offset = 0;
+  const limit = 50;
+  let hasNext = true;
+
+  while (hasNext && playlists.length < 200) {
+    try {
+      const res = await fetch(`https://api.spotify.com/v1/me/playlists?limit=${limit}&offset=${offset}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) break;
+
+      const data = await res.json();
+      const items = data.items || [];
+
+      for (const item of items) {
+        if (!item) continue;
+        playlists.push({
+          id: item.id,
+          title: item.name || 'Untitled Spotify Playlist',
+          description: item.description || '',
+          thumbnailUrl:
+            item.images?.[0]?.url ||
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
+          itemCount: item.tracks?.total || 0,
+          channelTitle: item.owner?.display_name || 'Spotify User',
+          ownerTitle: item.owner?.display_name || 'Spotify User',
+          platform: 'spotify',
+        });
+      }
+
+      if (data.next) {
+        offset += limit;
+      } else {
+        hasNext = false;
+      }
+    } catch (e) {
+      break;
+    }
+  }
+
+  return playlists;
+}
+
+/**
+ * Looks up any Spotify playlist by URL, URI, or ID
+ */
+export async function fetchSpotifyPlaylistById(
+  accessToken: string,
+  input: string,
+  isDemoMode: boolean = false
+): Promise<GenericPlaylist | null> {
+  let playlistId = input.trim();
+
+  // Extract ID from URL (e.g. open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M?si=...)
+  if (playlistId.includes('spotify.com/playlist/')) {
+    const match = playlistId.match(/playlist\/([a-zA-Z0-9]+)/);
+    if (match && match[1]) {
+      playlistId = match[1];
+    }
+  } else if (playlistId.startsWith('spotify:playlist:')) {
+    playlistId = playlistId.replace('spotify:playlist:', '');
+  }
+
+  if (isDemoMode) {
+    return (
+      MOCK_SPOTIFY_PLAYLISTS.find((p) => p.id === playlistId) || {
+        id: playlistId,
+        title: `Custom Spotify Playlist (${playlistId})`,
+        description: 'Imported via URL',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+        itemCount: 8,
+        channelTitle: 'Spotify Curated',
+        platform: 'spotify',
+      }
+    );
+  }
+
+  try {
+    const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return null;
+
+    const item = await res.json();
+    return {
+      id: item.id,
+      title: item.name || 'Custom Spotify Playlist',
+      description: item.description || '',
+      thumbnailUrl:
+        item.images?.[0]?.url ||
+        'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
+      itemCount: item.tracks?.total || 0,
+      channelTitle: item.owner?.display_name || 'Spotify',
+      ownerTitle: item.owner?.display_name || 'Spotify',
+      platform: 'spotify',
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Fetches all tracks from a selected Spotify playlist or Liked Songs
+ */
+export async function fetchSpotifyPlaylistTracks(
+  accessToken: string,
+  playlistId: string,
+  isDemoMode: boolean = false
+): Promise<GenericTrack[]> {
+  if (isDemoMode || !accessToken || accessToken === 'demo_token') {
+    return MOCK_SPOTIFY_PLAYLIST_TRACKS[playlistId] || MOCK_SPOTIFY_PLAYLIST_TRACKS['LIKED_SONGS'] || [];
+  }
+
+  const tracks: GenericTrack[] = [];
+
+  // If Liked Songs
+  if (playlistId === 'LIKED_SONGS') {
+    let offset = 0;
+    const limit = 50;
+    let hasNext = true;
+
+    while (hasNext && tracks.length < 500) {
+      const res = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) break;
+
+      const data = await res.json();
+      const items = data.items || [];
+
+      for (const item of items) {
+        const t = item.track;
+        if (!t || !t.id) continue;
+        tracks.push({
+          id: t.id,
+          title: t.name,
+          artist: t.artists?.[0]?.name || 'Unknown Artist',
+          channelTitle: t.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
+          durationMs: t.duration_ms,
+          durationSec: Math.round(t.duration_ms / 1000),
+          thumbnailUrl: t.album?.images?.[0]?.url,
+          uri: t.uri,
+          url: t.external_urls?.spotify,
+        });
+      }
+
+      if (data.next) {
+        offset += limit;
+      } else {
+        hasNext = false;
+      }
+    }
+
+    return tracks;
+  }
+
+  // Otherwise regular playlist
+  let fetchUrl: string | null = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50`;
+
+  while (fetchUrl && tracks.length < 500) {
+    const response: Response = await fetch(fetchUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) break;
+
+    const data: any = await response.json();
+    const items = data.items || [];
+
+    for (const item of items) {
+      const t = item.track;
+      if (!t || !t.id) continue;
+      tracks.push({
+        id: t.id,
+        title: t.name,
+        artist: t.artists?.[0]?.name || 'Unknown Artist',
+        channelTitle: t.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
+        durationMs: t.duration_ms,
+        durationSec: Math.round(t.duration_ms / 1000),
+        thumbnailUrl: t.album?.images?.[0]?.url,
+        uri: t.uri,
+        url: t.external_urls?.spotify,
+      });
+    }
+
+    fetchUrl = data.next || null;
+  }
+
+  return tracks;
+}
+
+/**
  * Searches Spotify for a track using strict query with fallback to broad query,
  * and validates candidate duration (within ±12s).
  */
@@ -138,14 +366,12 @@ export async function searchSpotifyTrack(
   cleaned: CleanedTrackMetadata,
   isDemoMode: boolean = false
 ): Promise<{ track: SpotifyTrackResult | null; reason?: string }> {
-  // If in Demo Mode, use the mock search engine
   if (isDemoMode || !accessToken || accessToken === 'demo_token') {
     return searchMockSpotify(cleaned.cleanedTitle, cleaned.cleanedArtist, cleaned.rawDurationSec);
   }
 
   const { strictQuery, fallbackQuery, broadQuery } = buildSpotifySearchQueries(cleaned);
 
-  // Helper to execute Spotify search query
   const querySpotify = async (q: string) => {
     const url = `https://api.spotify.com/v1/search?type=track&limit=5&q=${encodeURIComponent(q)}`;
     const res = await fetch(url, {
@@ -157,15 +383,12 @@ export async function searchSpotifyTrack(
   };
 
   try {
-    // 1. Primary Strict Search: track:X artist:Y
     let candidates = await querySpotify(strictQuery);
 
-    // 2. Fallback Search: "Title Artist"
     if (!candidates || candidates.length === 0) {
       candidates = await querySpotify(fallbackQuery);
     }
 
-    // 3. Broad Search: "Title"
     if (!candidates || candidates.length === 0) {
       candidates = await querySpotify(broadQuery);
     }
@@ -177,7 +400,6 @@ export async function searchSpotifyTrack(
       };
     }
 
-    // 4. Duration Validation & Best Candidate Selection
     let bestMatch: any = null;
     let minDiffSec = Infinity;
 
@@ -189,7 +411,6 @@ export async function searchSpotifyTrack(
       }
     }
 
-    // If no candidate passed the strict ±12s check, check if first candidate is acceptable
     if (!bestMatch) {
       const first = candidates[0];
       const checkFirst = isDurationValid(first.duration_ms, cleaned.rawDurationSec, 12);
@@ -245,7 +466,6 @@ export async function createSpotifyPlaylist(
     };
   }
 
-  // 1. Primary endpoint: POST /v1/me/playlists (Spotify modern standard)
   let response = await fetch('https://api.spotify.com/v1/me/playlists', {
     method: 'POST',
     headers: {
@@ -259,7 +479,6 @@ export async function createSpotifyPlaylist(
     }),
   });
 
-  // 2. Fallback: try public: true if 403 (in case only playlist-modify-public was authorized)
   if (!response.ok && response.status === 403) {
     response = await fetch('https://api.spotify.com/v1/me/playlists', {
       method: 'POST',
@@ -275,7 +494,6 @@ export async function createSpotifyPlaylist(
     });
   }
 
-  // 3. Fallback: try user endpoint
   if (!response.ok && userId && userId !== 'demo_user') {
     response = await fetch(`https://api.spotify.com/v1/users/${encodeURIComponent(userId)}/playlists`, {
       method: 'POST',
@@ -315,7 +533,6 @@ export async function addTracksToSpotifyPlaylist(
     return { addedCount: trackUris.length };
   }
 
-  // Sanitize: only valid spotify:track: URIs
   const validUris = trackUris.filter(
     (uri) => uri && typeof uri === 'string' && uri.startsWith('spotify:track:')
   );
@@ -330,7 +547,6 @@ export async function addTracksToSpotifyPlaylist(
     const chunk = validUris.slice(i, i + chunkSize);
     let chunkSuccess = false;
 
-    // 1. Spotify 2026 Modern Standard: POST /v1/playlists/{id}/items (JSON body)
     try {
       let response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
         method: 'POST',
@@ -347,7 +563,6 @@ export async function addTracksToSpotifyPlaylist(
         chunkSuccess = true;
         totalAdded += chunk.length;
       } else {
-        // 2. Fallback: POST /v1/playlists/{id}/items (Query params)
         const queryUris = encodeURIComponent(chunk.join(','));
         response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items?uris=${queryUris}`, {
           method: 'POST',
@@ -361,7 +576,6 @@ export async function addTracksToSpotifyPlaylist(
           chunkSuccess = true;
           totalAdded += chunk.length;
         } else {
-          // 3. Fallback: Legacy POST /v1/playlists/{id}/tracks
           response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
             method: 'POST',
             headers: {
@@ -377,7 +591,6 @@ export async function addTracksToSpotifyPlaylist(
             chunkSuccess = true;
             totalAdded += chunk.length;
           } else {
-            // 4. Fallback: Legacy POST /v1/playlists/{id}/tracks (Query params)
             response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?uris=${queryUris}`, {
               method: 'POST',
               headers: {

@@ -1,20 +1,33 @@
-export interface YouTubePlaylist {
+export type PlatformId = 'youtube' | 'spotify' | 'apple' | 'soundcloud' | 'tidal';
+
+export interface GenericPlaylist {
   id: string;
   title: string;
   description: string;
   thumbnailUrl: string;
   itemCount: number;
-  channelTitle: string;
+  channelTitle?: string;
+  ownerTitle?: string;
+  platform?: PlatformId;
 }
 
-export interface YouTubeTrack {
+export type YouTubePlaylist = GenericPlaylist;
+export type SpotifyPlaylist = GenericPlaylist;
+
+export interface GenericTrack {
   id: string;
   title: string;
-  channelTitle: string;
+  artist?: string;
+  channelTitle?: string;
   thumbnailUrl?: string;
-  durationSec?: number; // Estimated or fetched from contentDetails
+  durationSec?: number;
+  durationMs?: number;
   videoOwnerChannelTitle?: string;
+  uri?: string;
+  url?: string;
 }
+
+export type YouTubeTrack = GenericTrack;
 
 export interface CleanedTrackMetadata {
   originalTitle: string;
@@ -39,14 +52,31 @@ export interface SpotifyTrackResult {
   durationDiffSec?: number;
 }
 
+export interface YouTubeTrackResult {
+  id: string;
+  name: string;
+  artist: string;
+  channelTitle: string;
+  thumbnailUrl?: string;
+  durationSec: number;
+  url: string;
+  matchScore?: number;
+  durationDiffSec?: number;
+}
+
 export type TrackMatchStatus = 'MATCHED' | 'UNMATCHED' | 'SEARCHING' | 'SKIPPED' | 'ADDED';
 
 export interface TrackReconciliation {
   index: number;
-  sourceTrack: YouTubeTrack;
+  sourceTrack: GenericTrack;
   cleaned: CleanedTrackMetadata;
   status: TrackMatchStatus;
   spotifyTrack?: SpotifyTrackResult;
+  youtubeTrack?: YouTubeTrackResult;
+  targetTrackTitle?: string;
+  targetTrackArtist?: string;
+  targetTrackUrl?: string;
+  targetDurationDiffSec?: number;
   reason?: string;
   timestamp: string;
 }
@@ -58,6 +88,7 @@ export interface MigrationProgressEvent {
     | 'TRACK_SEARCHING'
     | 'TRACK_MATCHED'
     | 'TRACK_UNMATCHED'
+    | 'CREATING_TARGET_PLAYLIST'
     | 'CREATING_SPOTIFY_PLAYLIST'
     | 'ADDING_TRACKS'
     | 'COMPLETE'
@@ -65,11 +96,15 @@ export interface MigrationProgressEvent {
     | 'ERROR';
   playlistId: string;
   playlistTitle?: string;
+  sourcePlatform?: PlatformId;
+  targetPlatform?: PlatformId;
   totalTracks: number;
   currentIndex: number;
   matchedCount: number;
   unmatchedCount: number;
   currentTrack?: TrackReconciliation;
+  targetPlaylistUrl?: string;
+  targetPlaylistId?: string;
   spotifyPlaylistUrl?: string;
   spotifyPlaylistId?: string;
   message: string;
@@ -92,10 +127,15 @@ export interface PlatformAuthStatus {
 }
 
 export interface MigrationSummary {
-  originalPlaylist: YouTubePlaylist;
-  spotifyPlaylistId: string;
-  spotifyPlaylistUrl: string;
-  spotifyPlaylistName: string;
+  originalPlaylist: GenericPlaylist;
+  targetPlaylistId: string;
+  targetPlaylistUrl: string;
+  targetPlaylistName: string;
+  sourcePlatform: PlatformId;
+  targetPlatform: PlatformId;
+  spotifyPlaylistId?: string;
+  spotifyPlaylistUrl?: string;
+  spotifyPlaylistName?: string;
   totalTracks: number;
   matchedCount: number;
   unmatchedCount: number;

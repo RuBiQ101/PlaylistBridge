@@ -8,25 +8,26 @@ import {
   ArrowRight,
   ArrowLeft,
   LogOut,
-  Sparkles,
   ArrowRightLeft,
   Music2,
   Disc3,
   Check,
   Zap,
 } from 'lucide-react';
-import { PlatformAuthStatus } from '@/lib/types';
+import { PlatformAuthStatus, PlatformId } from '@/lib/types';
 
 interface PlatformSelectorProps {
   authStatus: PlatformAuthStatus | null;
   isLoading: boolean;
-  onProceed: () => void;
+  selectedSource?: PlatformId;
+  selectedTarget?: PlatformId;
+  onProceed: (sourceId: PlatformId, targetId: PlatformId) => void;
   onBackToHome: () => void;
   onLogout: (platform: string) => void;
 }
 
 interface PlatformOption {
-  id: string;
+  id: PlatformId;
   name: string;
   category: string;
   color: string;
@@ -40,18 +41,56 @@ interface PlatformOption {
 export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   authStatus,
   isLoading,
+  selectedSource = 'youtube',
+  selectedTarget = 'spotify',
   onProceed,
   onBackToHome,
   onLogout,
 }) => {
-  const [sourceId, setSourceId] = useState<string>('youtube');
-  const [targetId, setTargetId] = useState<string>('spotify');
+  const [sourceId, setSourceId] = useState<PlatformId>(selectedSource);
+  const [targetId, setTargetId] = useState<PlatformId>(selectedTarget);
 
   const isSpotifyConnected = !!authStatus?.spotify?.connected;
   const isYouTubeConnected = !!authStatus?.youtube?.connected;
 
-  const isSupportedRoute = sourceId === 'youtube' && targetId === 'spotify';
-  const canProceed = isSupportedRoute && isSpotifyConnected && isYouTubeConnected;
+  const isSupportedRoute =
+    (sourceId === 'youtube' && targetId === 'spotify') ||
+    (sourceId === 'spotify' && targetId === 'youtube');
+
+  // Both accounts must be connected, or demo mode active
+  const isDemo = !!authStatus?.isDemoMode;
+  const canProceed = isSupportedRoute && (isDemo || (isSpotifyConnected && isYouTubeConnected));
+
+  // Swap Source and Destination
+  const handleSwap = () => {
+    if (sourceId === 'youtube' && targetId === 'spotify') {
+      setSourceId('spotify');
+      setTargetId('youtube');
+    } else if (sourceId === 'spotify' && targetId === 'youtube') {
+      setSourceId('youtube');
+      setTargetId('spotify');
+    }
+  };
+
+  // Handle Source Select
+  const handleSourceSelect = (id: PlatformId) => {
+    setSourceId(id);
+    if (id === 'youtube' && targetId === 'youtube') {
+      setTargetId('spotify');
+    } else if (id === 'spotify' && targetId === 'spotify') {
+      setTargetId('youtube');
+    }
+  };
+
+  // Handle Target Select
+  const handleTargetSelect = (id: PlatformId) => {
+    setTargetId(id);
+    if (id === 'youtube' && sourceId === 'youtube') {
+      setSourceId('spotify');
+    } else if (id === 'spotify' && sourceId === 'spotify') {
+      setSourceId('youtube');
+    }
+  };
 
   // Source Platform List
   const sourcePlatforms: PlatformOption[] = [
@@ -77,8 +116,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       color: 'text-spotify',
       bgColor: 'bg-emerald-950/30',
       borderColor: 'border-emerald-500/40',
-      available: false,
-      badge: 'Rollout Next',
+      available: true,
+      badge: 'Active & Ready',
       iconSvg: (cls = 'w-6 h-6') => (
         <svg className={`${cls} fill-current text-spotify`} viewBox="0 0 24 24">
           <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.527 17.306a.82.82 0 0 1-1.127.273c-3.08-1.884-6.958-2.31-11.522-1.267a.82.82 0 1 1-.366-1.599c5.006-1.144 9.29-.661 12.742 1.466a.82.82 0 0 1 .273 1.127zm1.611-3.585a1.025 1.025 0 0 1-1.41.338c-3.524-2.166-8.898-2.793-13.064-1.529a1.025 1.025 0 1 1-.595-1.962c4.757-1.444 10.678-.748 14.73 1.743a1.025 1.025 0 0 1 .339 1.41zm.143-3.738C15.06 7.472 8.643 7.26 4.938 8.384a1.23 1.23 0 0 1-.722-2.353c4.256-1.292 11.341-1.045 15.986 1.71a1.23 1.23 0 1 1-1.281 2.097z" />
@@ -133,8 +172,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       color: 'text-red-500',
       bgColor: 'bg-red-950/30',
       borderColor: 'border-red-500/40',
-      available: false,
-      badge: 'Rollout Next',
+      available: true,
+      badge: 'Active & Ready',
       iconSvg: (cls = 'w-6 h-6') => (
         <svg className={`${cls} fill-current text-red-500`} viewBox="0 0 24 24">
           <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
@@ -164,6 +203,9 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       iconSvg: (cls = 'w-6 h-6') => <Disc3 className={`${cls} text-cyan-400`} />,
     },
   ];
+
+  const sourceName = sourceId === 'youtube' ? 'YouTube Music' : 'Spotify';
+  const targetName = targetId === 'spotify' ? 'Spotify' : 'YouTube Music';
 
   return (
     <div className="space-y-10 max-w-5xl mx-auto px-4 py-4">
@@ -203,21 +245,24 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
               1. Transfer From (Source)
             </span>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-950/40 text-red-400 border border-red-500/20 font-medium">
-              Source
+              Source: {sourceName}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {sourcePlatforms.map((p) => {
               const isSelected = sourceId === p.id;
+              const isRed = p.id === 'youtube';
               return (
                 <button
                   key={p.id}
-                  onClick={() => p.available && setSourceId(p.id)}
+                  onClick={() => p.available && handleSourceSelect(p.id)}
                   disabled={!p.available}
                   className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[105px] ${
                     isSelected
-                      ? 'border-red-500/80 bg-gradient-to-b from-red-950/40 to-slate-950 shadow-lg shadow-red-950/40 scale-[1.02]'
+                      ? isRed
+                        ? 'border-red-500/80 bg-gradient-to-b from-red-950/40 to-slate-950 shadow-lg shadow-red-950/40 scale-[1.02]'
+                        : 'border-emerald-500/80 bg-gradient-to-b from-emerald-950/40 to-slate-950 shadow-lg shadow-emerald-950/40 scale-[1.02]'
                       : p.available
                       ? 'border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-900/60 cursor-pointer'
                       : 'border-slate-900 bg-slate-950/30 opacity-40 cursor-not-allowed'
@@ -228,7 +273,11 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                       {p.iconSvg('w-5 h-5')}
                     </div>
                     {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center">
+                      <div
+                        className={`w-5 h-5 rounded-full text-white flex items-center justify-center ${
+                          isRed ? 'bg-red-500' : 'bg-spotify text-black'
+                        }`}
+                      >
                         <Check className="w-3 h-3 stroke-[3]" />
                       </div>
                     )}
@@ -243,11 +292,18 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           </div>
         </div>
 
-        {/* Center Transfer Arrow (1 Col) */}
-        <div className="lg:col-span-1 flex items-center justify-center py-2 lg:py-0">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 border border-slate-700 shadow-xl flex items-center justify-center text-spotify animate-pulse">
-            <ArrowRightLeft className="w-6 h-6" />
-          </div>
+        {/* Center Transfer Arrow & Swap Button (1 Col) */}
+        <div className="lg:col-span-1 flex flex-col items-center justify-center py-2 lg:py-0">
+          <button
+            onClick={handleSwap}
+            title="Click to swap transfer direction"
+            className="group w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 border border-slate-700 hover:border-spotify/80 hover:bg-slate-800 shadow-xl flex items-center justify-center text-spotify transition-all cursor-pointer hover:scale-110 active:scale-95"
+          >
+            <ArrowRightLeft className="w-6 h-6 group-hover:rotate-180 transition-transform duration-300" />
+          </button>
+          <span className="text-[10px] text-slate-500 mt-1 font-medium hidden lg:inline">
+            Click to swap
+          </span>
         </div>
 
         {/* Destination Platform Grid (5 Cols) */}
@@ -257,21 +313,24 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
               2. Transfer To (Destination)
             </span>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 font-medium">
-              Destination
+              Target: {targetName}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {targetPlatforms.map((p) => {
               const isSelected = targetId === p.id;
+              const isRed = p.id === 'youtube';
               return (
                 <button
                   key={p.id}
-                  onClick={() => p.available && setTargetId(p.id)}
+                  onClick={() => p.available && handleTargetSelect(p.id)}
                   disabled={!p.available}
                   className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[105px] ${
                     isSelected
-                      ? 'border-emerald-500/80 bg-gradient-to-b from-emerald-950/40 to-slate-950 shadow-lg shadow-emerald-950/40 scale-[1.02]'
+                      ? isRed
+                        ? 'border-red-500/80 bg-gradient-to-b from-red-950/40 to-slate-950 shadow-lg shadow-red-950/40 scale-[1.02]'
+                        : 'border-emerald-500/80 bg-gradient-to-b from-emerald-950/40 to-slate-950 shadow-lg shadow-emerald-950/40 scale-[1.02]'
                       : p.available
                       ? 'border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-900/60 cursor-pointer'
                       : 'border-slate-900 bg-slate-950/30 opacity-40 cursor-not-allowed'
@@ -282,7 +341,11 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                       {p.iconSvg('w-5 h-5')}
                     </div>
                     {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-spotify text-black flex items-center justify-center">
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          isRed ? 'bg-red-500 text-white' : 'bg-spotify text-black'
+                        }`}
+                      >
                         <Check className="w-3 h-3 stroke-[3]" />
                       </div>
                     )}
@@ -302,9 +365,21 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/20 via-slate-900 to-emerald-950/20 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-red-400">YouTube Music</span>
+            <span
+              className={`text-sm font-bold ${
+                sourceId === 'youtube' ? 'text-red-400' : 'text-spotify'
+              }`}
+            >
+              {sourceName}
+            </span>
             <ArrowRight className="w-4 h-4 text-slate-500" />
-            <span className="text-sm font-bold text-spotify">Spotify</span>
+            <span
+              className={`text-sm font-bold ${
+                targetId === 'spotify' ? 'text-spotify' : 'text-red-400'
+              }`}
+            >
+              {targetName}
+            </span>
           </div>
           <span className="text-xs text-slate-400 hidden md:inline">
             • Full Playlist & Liked Songs Transfer
@@ -313,12 +388,12 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
         <div className="flex items-center gap-2 text-xs">
           <span
             className={`px-3 py-1 rounded-full font-semibold border ${
-              isYouTubeConnected && isSpotifyConnected
+              (isYouTubeConnected && isSpotifyConnected) || isDemo
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                 : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
             }`}
           >
-            {isYouTubeConnected && isSpotifyConnected
+            {(isYouTubeConnected && isSpotifyConnected) || isDemo
               ? '✓ Both Accounts Connected'
               : 'Action Required: Connect Accounts Below'}
           </span>
@@ -346,7 +421,9 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">YouTube Music</h3>
-                  <p className="text-xs text-slate-400">Source Platform</p>
+                  <p className="text-xs text-slate-400">
+                    {sourceId === 'youtube' ? 'Source Platform' : 'Destination Platform'}
+                  </p>
                 </div>
               </div>
 
@@ -391,7 +468,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                     <p className="text-xs font-semibold text-white">
                       {authStatus?.youtube?.channelTitle || 'Authorized Channel'}
                     </p>
-                    <p className="text-[11px] text-slate-400">Scope: youtube.readonly</p>
+                    <p className="text-[11px] text-slate-400">Scope: Read & Playlist Creation</p>
                   </div>
                 </div>
                 <button
@@ -404,7 +481,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
               </div>
             ) : (
               <p className="text-xs text-slate-400 leading-relaxed">
-                Connect your YouTube account to read your playlists, mixes, and liked music.
+                Connect your YouTube account to read or create playlists and mixes.
               </p>
             )}
           </div>
@@ -422,7 +499,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             ) : (
               <div className="text-center py-1">
                 <span className="text-xs text-emerald-400/90 font-medium">
-                  ✓ Ready to read playlists
+                  ✓ Ready for transfer
                 </span>
               </div>
             )}
@@ -448,7 +525,9 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">Spotify</h3>
-                  <p className="text-xs text-slate-400">Destination Platform</p>
+                  <p className="text-xs text-slate-400">
+                    {sourceId === 'spotify' ? 'Source Platform' : 'Destination Platform'}
+                  </p>
                 </div>
               </div>
 
@@ -494,7 +573,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                       {authStatus?.spotify?.displayName || 'Spotify User'}
                     </p>
                     <p className="text-[11px] text-slate-400">
-                      Scope: playlist-modify-private & public
+                      Scope: Read & Playlist Management
                     </p>
                   </div>
                 </div>
@@ -508,7 +587,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
               </div>
             ) : (
               <p className="text-xs text-slate-400 leading-relaxed">
-                Connect your Spotify account to create new playlists and populate matched tracks.
+                Connect your Spotify account to read or create playlists and populate matched tracks.
               </p>
             )}
           </div>
@@ -526,7 +605,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             ) : (
               <div className="text-center py-1">
                 <span className="text-xs text-emerald-400/90 font-medium">
-                  ✓ Ready to create playlists
+                  ✓ Ready for transfer
                 </span>
               </div>
             )}
@@ -537,7 +616,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       {/* Bottom Step Advancement Button */}
       <div className="pt-4 flex justify-end">
         <button
-          onClick={onProceed}
+          onClick={() => onProceed(sourceId, targetId)}
           disabled={!canProceed || isLoading}
           className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-sm transition-all ${
             canProceed

@@ -13,12 +13,14 @@ import {
   Layers,
   Check,
 } from 'lucide-react';
-import { MigrationProgressEvent, TrackReconciliation } from '@/lib/types';
+import { MigrationProgressEvent, PlatformId, TrackReconciliation } from '@/lib/types';
 
 interface StepTransferProgressProps {
   progressEvents: MigrationProgressEvent[];
   latestEvent: MigrationProgressEvent | null;
   reconciliations: TrackReconciliation[];
+  sourcePlatform?: PlatformId;
+  targetPlatform?: PlatformId;
   isComplete: boolean;
   onViewSummary: () => void;
 }
@@ -27,6 +29,8 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
   progressEvents,
   latestEvent,
   reconciliations,
+  sourcePlatform = 'youtube',
+  targetPlatform = 'spotify',
   isComplete,
   onViewSummary,
 }) => {
@@ -36,6 +40,10 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
   useEffect(() => {
     terminalBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [progressEvents]);
+
+  const isSpotifyToYouTube = sourcePlatform === 'spotify' && targetPlatform === 'youtube';
+  const sourceName = sourcePlatform === 'spotify' ? 'Spotify' : 'YouTube Music';
+  const targetName = targetPlatform === 'youtube' ? 'YouTube Music' : 'Spotify';
 
   const total = latestEvent?.totalTracks || 1;
   const current = latestEvent?.currentIndex || 0;
@@ -53,21 +61,27 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
           {isComplete ? (
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           ) : (
-            <Loader2 className="w-4 h-4 text-spotify animate-spin" />
+            <Loader2
+              className={`w-4 h-4 animate-spin ${
+                targetPlatform === 'youtube' ? 'text-red-500' : 'text-spotify'
+              }`}
+            />
           )}
           <span>
             {isComplete
               ? 'Migration Complete!'
-              : 'Step 3 of 4 • Real-Time Migration Stream'}
+              : `Step 3 of 4 • Streaming ${sourceName} ➔ ${targetName}`}
           </span>
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight text-white">
-          {isComplete ? 'Playlist Transferred Successfully' : 'Transferring to Spotify...'}
+          {isComplete
+            ? `Playlist Transferred to ${targetName} Successfully`
+            : `Transferring to ${targetName}...`}
         </h1>
         <p className="text-slate-400 text-sm max-w-lg mx-auto">
           {isComplete
-            ? 'Your tracks have been matched, duration-verified, and added to your Spotify account.'
-            : 'Streaming track metadata, stripping YouTube noise, querying Spotify catalog, and checking audio durations (±12s).'}
+            ? `Your tracks have been matched, duration-verified, and added to your ${targetName} library.`
+            : `Streaming track metadata, normalizing titles, querying ${targetName} catalog, and verifying durations (±12s).`}
         </p>
       </div>
 
@@ -82,7 +96,13 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
         {/* Progress */}
         <div className="p-4 rounded-2xl glass-panel border border-slate-800 text-center">
           <p className="text-xs text-slate-400 font-medium mb-1">Progress</p>
-          <p className="text-2xl font-black text-spotify">{progressPercent}%</p>
+          <p
+            className={`text-2xl font-black ${
+              targetPlatform === 'youtube' ? 'text-red-400' : 'text-spotify'
+            }`}
+          >
+            {progressPercent}%
+          </p>
         </div>
 
         {/* Matched */}
@@ -102,10 +122,20 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
       <div className="space-y-2 p-6 rounded-2xl glass-panel border border-slate-800">
         <div className="flex items-center justify-between text-xs font-semibold">
           <span className="text-slate-300 flex items-center gap-2">
-            {!isComplete && <span className="w-2 h-2 rounded-full bg-spotify animate-ping" />}
+            {!isComplete && (
+              <span
+                className={`w-2 h-2 rounded-full animate-ping ${
+                  targetPlatform === 'youtube' ? 'bg-red-500' : 'bg-spotify'
+                }`}
+              />
+            )}
             <span>{latestEvent?.message || 'Processing migration...'}</span>
           </span>
-          <span className="text-spotify font-mono">
+          <span
+            className={`font-mono ${
+              targetPlatform === 'youtube' ? 'text-red-400' : 'text-spotify'
+            }`}
+          >
             {current}/{total} tracks ({progressPercent}%)
           </span>
         </div>
@@ -113,7 +143,11 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
         {/* Bar */}
         <div className="w-full h-3.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 via-spotify to-spotify-accent rounded-full transition-all duration-300 ease-out shadow-lg shadow-emerald-500/50"
+            className={`h-full rounded-full transition-all duration-300 ease-out shadow-lg ${
+              targetPlatform === 'youtube'
+                ? 'bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 shadow-red-500/50'
+                : 'bg-gradient-to-r from-emerald-500 via-spotify to-spotify-accent shadow-emerald-500/50'
+            }`}
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -133,14 +167,25 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             {/* Source */}
             <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
-                Source (YouTube)
+              <span
+                className={`text-[10px] font-bold uppercase tracking-wider ${
+                  sourcePlatform === 'spotify' ? 'text-spotify' : 'text-red-400'
+                }`}
+              >
+                Source ({sourceName})
               </span>
               <p className="font-semibold text-white line-clamp-1">
                 {currentTrack.sourceTrack.title}
               </p>
               <p className="text-slate-400 text-[11px]">
-                Cleaned: <span className="text-slate-200 font-mono font-medium">"{currentTrack.cleaned.cleanedTitle}"</span> by <span className="text-slate-200 font-mono font-medium">"{currentTrack.cleaned.cleanedArtist}"</span>
+                Cleaned:{' '}
+                <span className="text-slate-200 font-mono font-medium">
+                  "{currentTrack.cleaned.cleanedTitle}"
+                </span>{' '}
+                by{' '}
+                <span className="text-slate-200 font-mono font-medium">
+                  "{currentTrack.cleaned.cleanedArtist}"
+                </span>
               </p>
             </div>
 
@@ -157,20 +202,32 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
                   currentTrack.status === 'MATCHED' ? 'text-emerald-400' : 'text-amber-400'
                 }`}
               >
-                {currentTrack.status === 'MATCHED' ? 'Spotify Candidate (Verified)' : 'Status'}
+                {currentTrack.status === 'MATCHED'
+                  ? `${targetName} Candidate (Verified)`
+                  : 'Status'}
               </span>
-              {currentTrack.status === 'MATCHED' && currentTrack.spotifyTrack ? (
+              {currentTrack.status === 'MATCHED' ? (
                 <div>
                   <p className="font-semibold text-white line-clamp-1">
-                    {currentTrack.spotifyTrack.name} • {currentTrack.spotifyTrack.artist}
+                    {currentTrack.targetTrackTitle ||
+                      currentTrack.spotifyTrack?.name ||
+                      currentTrack.youtubeTrack?.name}{' '}
+                    •{' '}
+                    {currentTrack.targetTrackArtist ||
+                      currentTrack.spotifyTrack?.artist ||
+                      currentTrack.youtubeTrack?.artist}
                   </p>
                   <p className="text-emerald-400/90 text-[11px]">
-                    ✓ Duration match (diff: {currentTrack.spotifyTrack.durationDiffSec ?? 0}s)
+                    ✓ Duration match (diff:{' '}
+                    {currentTrack.targetDurationDiffSec ??
+                      currentTrack.spotifyTrack?.durationDiffSec ??
+                      0}
+                    s)
                   </p>
                 </div>
               ) : (
                 <p className="text-amber-300 font-medium text-[11px]">
-                  {currentTrack.reason || 'Searching Spotify catalog...'}
+                  {currentTrack.reason || `Searching ${targetName} catalog...`}
                 </p>
               )}
             </div>
@@ -217,7 +274,11 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
             } else if (evt.type === 'ERROR') {
               badgeClass = 'text-red-400 bg-red-500/10 border-red-500/20';
               tag = 'ERROR';
-            } else if (evt.type === 'CREATING_SPOTIFY_PLAYLIST' || evt.type === 'ADDING_TRACKS') {
+            } else if (
+              evt.type === 'CREATING_TARGET_PLAYLIST' ||
+              evt.type === 'CREATING_SPOTIFY_PLAYLIST' ||
+              evt.type === 'ADDING_TRACKS'
+            ) {
               badgeClass = 'text-sky-400 bg-sky-500/10 border-sky-500/20';
               tag = 'API';
             }
@@ -250,16 +311,21 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
             <div>
               <h3 className="font-bold text-white text-base">Migration Completed!</h3>
               <p className="text-xs text-slate-300">
-                Matched {matched} of {total} tracks ({Math.round((matched / total) * 100)}% match rate).
+                Matched {matched} of {total} tracks ({Math.round((matched / total) * 100)}% match
+                rate).
               </p>
             </div>
           </div>
 
           <button
             onClick={onViewSummary}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-spotify hover:bg-spotify-accent text-black font-extrabold text-sm transition-all shadow-lg shadow-emerald-950/50 scale-100 hover:scale-[1.02]"
+            className={`w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-sm transition-all shadow-lg scale-100 hover:scale-[1.02] cursor-pointer ${
+              targetPlatform === 'youtube'
+                ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/50'
+                : 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/50'
+            }`}
           >
-            View Summary & Spotify Playlist
+            View Summary & {targetName} Playlist
           </button>
         </div>
       )}

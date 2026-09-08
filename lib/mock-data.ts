@@ -1,6 +1,6 @@
-import { YouTubePlaylist, YouTubeTrack, SpotifyTrackResult } from './types';
+import { GenericPlaylist, GenericTrack, SpotifyTrackResult, YouTubeTrackResult } from './types';
 
-export const MOCK_YOUTUBE_PLAYLISTS: YouTubePlaylist[] = [
+export const MOCK_YOUTUBE_PLAYLISTS: GenericPlaylist[] = [
   {
     id: 'yt-pl-synthwave-80s',
     title: 'Neon Nights: Synthwave & Retro Electro',
@@ -8,6 +8,7 @@ export const MOCK_YOUTUBE_PLAYLISTS: YouTubePlaylist[] = [
     thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
     itemCount: 8,
     channelTitle: 'RetroWaves Studio',
+    platform: 'youtube',
   },
   {
     id: 'yt-pl-lofi-chill',
@@ -16,6 +17,7 @@ export const MOCK_YOUTUBE_PLAYLISTS: YouTubePlaylist[] = [
     thumbnailUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&auto=format&fit=crop&q=80',
     itemCount: 6,
     channelTitle: 'Chilled Cow & Beat Lab',
+    platform: 'youtube',
   },
   {
     id: 'yt-pl-rock-legends',
@@ -24,16 +26,60 @@ export const MOCK_YOUTUBE_PLAYLISTS: YouTubePlaylist[] = [
     thumbnailUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=600&auto=format&fit=crop&q=80',
     itemCount: 7,
     channelTitle: 'Rock Vault Official',
+    platform: 'youtube',
   },
 ];
 
-export const MOCK_YOUTUBE_TRACKS: Record<string, YouTubeTrack[]> = {
+export const MOCK_SPOTIFY_PLAYLISTS: GenericPlaylist[] = [
+  {
+    id: 'LIKED_SONGS',
+    title: 'Liked Songs',
+    description: 'Your favorite tracks on Spotify (Auto Library)',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+    itemCount: 8,
+    channelTitle: 'Spotify Auto Library',
+    ownerTitle: 'Spotify User',
+    platform: 'spotify',
+  },
+  {
+    id: 'sp-pl-synth-hits',
+    title: 'Neon Nights: Synthwave & Retro Electro',
+    description: 'Vibrant 80s outrun synthwave and electronic highway vibes.',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    itemCount: 8,
+    channelTitle: 'Curated by Spotify',
+    ownerTitle: 'Spotify User',
+    platform: 'spotify',
+  },
+  {
+    id: 'sp-pl-rock-classics',
+    title: 'Ultimate 90s & 2000s Alt Rock Anthems',
+    description: 'Classic rock, indie gems, and high-energy guitar tracks.',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=600&auto=format&fit=crop&q=80',
+    itemCount: 7,
+    channelTitle: 'Rock Classics Hub',
+    ownerTitle: 'Spotify User',
+    platform: 'spotify',
+  },
+  {
+    id: 'sp-pl-chill-beats',
+    title: 'Late Night Lo-Fi Beats & Study Coffee',
+    description: 'Chill instrumental beats to study, relax, and code to.',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&auto=format&fit=crop&q=80',
+    itemCount: 6,
+    channelTitle: 'Lo-Fi Chillout',
+    ownerTitle: 'Spotify User',
+    platform: 'spotify',
+  },
+];
+
+export const MOCK_YOUTUBE_TRACKS: Record<string, GenericTrack[]> = {
   'yt-pl-synthwave-80s': [
     {
       id: 'yt-tr-1',
       title: 'The Weeknd - Blinding Lights (Official Music Video)',
       channelTitle: 'TheWeekndVEVO',
-      durationSec: 260, // ~4m 20s with video intro, actual song ~3m 20s
+      durationSec: 260,
       thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
     },
     {
@@ -82,7 +128,7 @@ export const MOCK_YOUTUBE_TRACKS: Record<string, YouTubeTrack[]> = {
       id: 'yt-tr-8',
       title: 'Unknown Underground Vaporwave Track - Ultra Rare Live Demo [Unreleased 1989 Bootleg]',
       channelTitle: 'MysticTapeHoarder99',
-      durationSec: 512, // Will purposefully test the UNMATCHED scenario!
+      durationSec: 512,
       thumbnailUrl: 'https://images.unsplash.com/photo-1526478806334-5fd488fcaabc?w=300&auto=format&fit=crop&q=80',
     },
   ],
@@ -126,7 +172,7 @@ export const MOCK_YOUTUBE_TRACKS: Record<string, YouTubeTrack[]> = {
       id: 'yt-lf-6',
       title: 'Obscure Fan-Made Cafe Ambiance Loop - 24 Hours [Audio Track]',
       channelTitle: 'RandomNoiseChannel',
-      durationSec: 86400, // Will intentionally trigger duration mismatch or unmatched
+      durationSec: 86400,
       thumbnailUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&auto=format&fit=crop&q=80',
     },
   ],
@@ -179,6 +225,269 @@ export const MOCK_YOUTUBE_TRACKS: Record<string, YouTubeTrack[]> = {
       channelTitle: 'Radiohead',
       durationSec: 236,
       thumbnailUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=300&auto=format&fit=crop&q=80',
+    },
+  ],
+};
+
+export const MOCK_SPOTIFY_PLAYLIST_TRACKS: Record<string, GenericTrack[]> = {
+  LIKED_SONGS: [
+    {
+      id: 'sp-1',
+      title: 'Blinding Lights',
+      artist: 'The Weeknd',
+      durationSec: 200,
+      durationMs: 200040,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:0VjIjW4GlUZAMYd2vXMi3b',
+    },
+    {
+      id: 'sp-2',
+      title: 'Get Lucky (feat. Pharrell Williams)',
+      artist: 'Daft Punk',
+      durationSec: 248,
+      durationMs: 248413,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:69kOkLUCkxIZYexIgSG8rq',
+    },
+    {
+      id: 'sp-3',
+      title: 'Midnight City',
+      artist: 'M83',
+      durationSec: 243,
+      durationMs: 243266,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:6GyFP1nfCDB8Jyik978UXW',
+    },
+    {
+      id: 'sp-4',
+      title: 'Nightcall',
+      artist: 'Kavinsky',
+      durationSec: 259,
+      durationMs: 259346,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:0u0W5BKyAhQ66487WjG9jH',
+    },
+    {
+      id: 'sp-5',
+      title: 'Starboy',
+      artist: 'The Weeknd',
+      durationSec: 230,
+      durationMs: 230453,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:7MXVkk9YM5IZxh0vL21tK2',
+    },
+    {
+      id: 'sp-6',
+      title: 'Turbo Killer',
+      artist: 'Carpenter Brut',
+      durationSec: 208,
+      durationMs: 208466,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:10qbHF9200A5RIpZ3xV96o',
+    },
+    {
+      id: 'sp-7',
+      title: 'Tech Noir',
+      artist: 'GUNSHIP',
+      durationSec: 297,
+      durationMs: 297293,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:27NeeG23Yy2wB6960vHk2M',
+    },
+    {
+      id: 'sp-8',
+      title: 'Ultra Rare Obscure Soundscape [Demo]',
+      artist: 'Unknown Artist 99',
+      durationSec: 512,
+      durationMs: 512000,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1526478806334-5fd488fcaabc?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:unknown',
+    },
+  ],
+  'sp-pl-synth-hits': [
+    {
+      id: 'sp-1',
+      title: 'Blinding Lights',
+      artist: 'The Weeknd',
+      durationSec: 200,
+      durationMs: 200040,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:0VjIjW4GlUZAMYd2vXMi3b',
+    },
+    {
+      id: 'sp-2',
+      title: 'Get Lucky',
+      artist: 'Daft Punk',
+      durationSec: 248,
+      durationMs: 248413,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:69kOkLUCkxIZYexIgSG8rq',
+    },
+    {
+      id: 'sp-3',
+      title: 'Midnight City',
+      artist: 'M83',
+      durationSec: 243,
+      durationMs: 243266,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:6GyFP1nfCDB8Jyik978UXW',
+    },
+    {
+      id: 'sp-4',
+      title: 'Nightcall',
+      artist: 'Kavinsky',
+      durationSec: 259,
+      durationMs: 259346,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:0u0W5BKyAhQ66487WjG9jH',
+    },
+    {
+      id: 'sp-5',
+      title: 'Starboy',
+      artist: 'The Weeknd',
+      durationSec: 230,
+      durationMs: 230453,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:7MXVkk9YM5IZxh0vL21tK2',
+    },
+    {
+      id: 'sp-6',
+      title: 'Turbo Killer',
+      artist: 'Carpenter Brut',
+      durationSec: 208,
+      durationMs: 208466,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:10qbHF9200A5RIpZ3xV96o',
+    },
+    {
+      id: 'sp-7',
+      title: 'Tech Noir',
+      artist: 'GUNSHIP',
+      durationSec: 297,
+      durationMs: 297293,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:27NeeG23Yy2wB6960vHk2M',
+    },
+  ],
+  'sp-pl-rock-classics': [
+    {
+      id: 'sp-rk-1',
+      title: 'Bohemian Rhapsody',
+      artist: 'Queen',
+      durationSec: 354,
+      durationMs: 354320,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:4u7EnebtmKWzUH433cf5Qv',
+    },
+    {
+      id: 'sp-rk-2',
+      title: 'Smells Like Teen Spirit',
+      artist: 'Nirvana',
+      durationSec: 301,
+      durationMs: 301920,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:5ghIWrDAZ8jX6mnNsj2Kb0',
+    },
+    {
+      id: 'sp-rk-3',
+      title: 'Everlong',
+      artist: 'Foo Fighters',
+      durationSec: 250,
+      durationMs: 250560,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:5UWwZ5lm5tZA9VgnZumAhf',
+    },
+    {
+      id: 'sp-rk-4',
+      title: 'Mr. Brightside',
+      artist: 'The Killers',
+      durationSec: 223,
+      durationMs: 222973,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:003vvx7Niy0Jmu2scZFqRd',
+    },
+    {
+      id: 'sp-rk-5',
+      title: 'Do I Wanna Know?',
+      artist: 'Arctic Monkeys',
+      durationSec: 272,
+      durationMs: 272394,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:5FVd6KXrgO9B3JPmC8OPst',
+    },
+    {
+      id: 'sp-rk-6',
+      title: 'Californication',
+      artist: 'Red Hot Chili Peppers',
+      durationSec: 321,
+      durationMs: 321533,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:48UPSzbZjLjgq0ChmpBs20',
+    },
+    {
+      id: 'sp-rk-7',
+      title: 'Creep',
+      artist: 'Radiohead',
+      durationSec: 236,
+      durationMs: 236440,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:70LAV211u5qC4Gz9Vb3e3j',
+    },
+  ],
+  'sp-pl-chill-beats': [
+    {
+      id: 'sp-lf-1',
+      title: 'A Light of Mine',
+      artist: 'Kudasai',
+      durationSec: 142,
+      durationMs: 142100,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:37rR5fT8Y7uX19x0j9kH0P',
+    },
+    {
+      id: 'sp-lf-2',
+      title: 'Both of Us',
+      artist: 'Idealism',
+      durationSec: 154,
+      durationMs: 154200,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:45kL6Y7uX19x0j9kH0P88r',
+    },
+    {
+      id: 'sp-lf-3',
+      title: 'Affection',
+      artist: 'Jinsang',
+      durationSec: 130,
+      durationMs: 130000,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:5TkR7fT8Y7uX19x0j9kH2Z',
+    },
+    {
+      id: 'sp-lf-4',
+      title: 'Monday Loop',
+      artist: 'Tomppabeats',
+      durationSec: 98,
+      durationMs: 98000,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:67uR7fT8Y7uX19x0j9kH33',
+    },
+    {
+      id: 'sp-lf-5',
+      title: 'Feather',
+      artist: 'Nujabes',
+      durationSec: 175,
+      durationMs: 175000,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:2EjXfH91ZZUQDo97Bp9du0',
+    },
+    {
+      id: 'sp-lf-6',
+      title: 'Obscure Ambient Sound',
+      artist: 'Unknown',
+      durationSec: 86400,
+      durationMs: 86400000,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&auto=format&fit=crop&q=80',
+      uri: 'spotify:track:unknown',
     },
   ],
 };
@@ -463,5 +772,71 @@ export function searchMockSpotify(
   return {
     track: null,
     reason: `No matching tracks found in Spotify catalog for "${cleanedTitle}" by "${cleanedArtist}"`,
+  };
+}
+
+/**
+ * Searches the mock YouTube catalog when migrating from Spotify to YouTube Music.
+ */
+export function searchMockYouTube(
+  cleanedTitle: string,
+  cleanedArtist: string,
+  sourceDurationSec?: number
+): { track: YouTubeTrackResult | null; reason?: string } {
+  const normTitle = cleanedTitle.toLowerCase().trim();
+  const normArtist = cleanedArtist.toLowerCase().trim();
+
+  // Search through all mock youtube tracks
+  const allYtTracks = Object.values(MOCK_YOUTUBE_TRACKS).flat();
+
+  for (const item of allYtTracks) {
+    const itemTitle = item.title.toLowerCase();
+    const itemChannel = (item.channelTitle || '').toLowerCase();
+
+    if (itemTitle.includes(normTitle) || itemTitle.includes(normArtist) || itemChannel.includes(normArtist)) {
+      if (sourceDurationSec && item.durationSec) {
+        const diffSec = Math.abs(item.durationSec - sourceDurationSec);
+        if (diffSec > 60 && sourceDurationSec > 500) {
+          return {
+            track: null,
+            reason: `Duration mismatch (${item.durationSec}s vs source ${sourceDurationSec}s exceeds threshold)`,
+          };
+        }
+      }
+      return {
+        track: {
+          id: item.id,
+          name: item.title,
+          artist: item.channelTitle || cleanedArtist,
+          channelTitle: item.channelTitle || '',
+          thumbnailUrl: item.thumbnailUrl,
+          durationSec: item.durationSec || sourceDurationSec || 210,
+          url: `https://music.youtube.com/watch?v=${item.id}`,
+        },
+      };
+    }
+  }
+
+  // If unknown track or deliberate failure
+  if (normTitle.includes('ultra rare') || normTitle.includes('unknown')) {
+    return {
+      track: null,
+      reason: `No matching YouTube video or official audio found for "${cleanedTitle}"`,
+    };
+  }
+
+  // Synthesize realistic match for demo
+  const mockVideoId = `yt-gen-${Math.random().toString(36).substring(2, 9)}`;
+  const estDuration = sourceDurationSec || 215;
+  return {
+    track: {
+      id: mockVideoId,
+      name: `${cleanedArtist} - ${cleanedTitle} (Official Audio)`,
+      artist: cleanedArtist,
+      channelTitle: `${cleanedArtist} - Topic`,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+      durationSec: estDuration,
+      url: `https://music.youtube.com/watch?v=${mockVideoId}`,
+    },
   };
 }

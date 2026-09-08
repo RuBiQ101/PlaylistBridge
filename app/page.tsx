@@ -9,7 +9,8 @@ import { StepTransferProgress } from '@/components/StepTransferProgress';
 import { StepSummary } from '@/components/StepSummary';
 import {
   PlatformAuthStatus,
-  YouTubePlaylist,
+  PlatformId,
+  GenericPlaylist,
   MigrationProgressEvent,
   TrackReconciliation,
 } from '@/lib/types';
@@ -21,17 +22,21 @@ export default function Home() {
   const [authStatus, setAuthStatus] = useState<PlatformAuthStatus | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
 
+  // Platform transfer direction
+  const [sourcePlatform, setSourcePlatform] = useState<PlatformId>('youtube');
+  const [targetPlatform, setTargetPlatform] = useState<PlatformId>('spotify');
+
   // Selected playlist & migration configuration
-  const [selectedPlaylist, setSelectedPlaylist] = useState<YouTubePlaylist | null>(null);
-  const [customSpotifyName, setCustomSpotifyName] = useState<string>('');
+  const [selectedPlaylist, setSelectedPlaylist] = useState<GenericPlaylist | null>(null);
+  const [customTargetName, setCustomTargetName] = useState<string>('');
 
   // Migration streaming state
   const [progressEvents, setProgressEvents] = useState<MigrationProgressEvent[]>([]);
   const [latestEvent, setLatestEvent] = useState<MigrationProgressEvent | null>(null);
   const [reconciliations, setReconciliations] = useState<TrackReconciliation[]>([]);
   const [isMigrationComplete, setIsMigrationComplete] = useState<boolean>(false);
-  const [spotifyResultUrl, setSpotifyResultUrl] = useState<string | undefined>();
-  const [spotifyResultId, setSpotifyResultId] = useState<string | undefined>();
+  const [targetResultUrl, setTargetResultUrl] = useState<string | undefined>();
+  const [targetResultId, setTargetResultId] = useState<string | undefined>();
 
   // Load Auth Status from API
   const fetchAuthStatus = useCallback(async () => {
@@ -66,12 +71,12 @@ export default function Home() {
   // Home Return Handler for Logo
   const handleGoHome = () => {
     setSelectedPlaylist(null);
-    setCustomSpotifyName('');
+    setCustomTargetName('');
     setProgressEvents([]);
     setReconciliations([]);
     setIsMigrationComplete(false);
-    setSpotifyResultUrl(undefined);
-    setSpotifyResultId(undefined);
+    setTargetResultUrl(undefined);
+    setTargetResultId(undefined);
     setViewMode('landing');
   };
 
@@ -89,19 +94,28 @@ export default function Home() {
     }
   };
 
+  // Proceed from Platform Direction Selector
+  const handleProceedPlatforms = (source: PlatformId, target: PlatformId) => {
+    setSourcePlatform(source);
+    setTargetPlatform(target);
+    setViewMode('playlists');
+  };
+
   // Start Transfer via SSE Stream
-  const handleStartTransfer = (playlist: YouTubePlaylist, customName: string) => {
+  const handleStartTransfer = (playlist: GenericPlaylist, customName: string) => {
     setSelectedPlaylist(playlist);
-    setCustomSpotifyName(customName);
+    setCustomTargetName(customName);
     setProgressEvents([]);
     setReconciliations([]);
     setIsMigrationComplete(false);
-    setSpotifyResultUrl(undefined);
+    setTargetResultUrl(undefined);
     setViewMode('transfer');
 
     const eventSourceUrl = `/api/transfer/stream?playlistId=${encodeURIComponent(
       playlist.id
-    )}&customName=${encodeURIComponent(customName)}`;
+    )}&customName=${encodeURIComponent(customName)}&sourcePlatform=${encodeURIComponent(
+      sourcePlatform
+    )}&targetPlatform=${encodeURIComponent(targetPlatform)}`;
 
     const eventSource = new EventSource(eventSourceUrl);
 
@@ -115,11 +129,13 @@ export default function Home() {
           setReconciliations((prev) => [...prev, data.currentTrack!]);
         }
 
-        if (data.spotifyPlaylistUrl) {
-          setSpotifyResultUrl(data.spotifyPlaylistUrl);
+        const url = data.targetPlaylistUrl || data.spotifyPlaylistUrl;
+        const id = data.targetPlaylistId || data.spotifyPlaylistId;
+        if (url) {
+          setTargetResultUrl(url);
         }
-        if (data.spotifyPlaylistId) {
-          setSpotifyResultId(data.spotifyPlaylistId);
+        if (id) {
+          setTargetResultId(id);
         }
 
         if (data.type === 'COMPLETE') {
@@ -142,7 +158,7 @@ export default function Home() {
   // Reset to Migrate Another Playlist
   const handleMigrateAnother = () => {
     setSelectedPlaylist(null);
-    setCustomSpotifyName('');
+    setCustomTargetName('');
     setProgressEvents([]);
     setReconciliations([]);
     setIsMigrationComplete(false);
@@ -166,7 +182,9 @@ export default function Home() {
           <PlatformSelector
             authStatus={authStatus}
             isLoading={isAuthLoading}
-            onProceed={() => setViewMode('playlists')}
+            selectedSource={sourcePlatform}
+            selectedTarget={targetPlatform}
+            onProceed={handleProceedPlatforms}
             onBackToHome={() => setViewMode('landing')}
             onLogout={handlePlatformLogout}
           />
@@ -175,6 +193,8 @@ export default function Home() {
         {/* 3. Playlist Selection Page */}
         {viewMode === 'playlists' && (
           <StepSelectPlaylist
+            sourcePlatform={sourcePlatform}
+            targetPlatform={targetPlatform}
             onBack={() => setViewMode('platforms')}
             onSelectAndStart={handleStartTransfer}
           />
@@ -186,6 +206,8 @@ export default function Home() {
             progressEvents={progressEvents}
             latestEvent={latestEvent}
             reconciliations={reconciliations}
+            sourcePlatform={sourcePlatform}
+            targetPlatform={targetPlatform}
             isComplete={isMigrationComplete}
             onViewSummary={() => setViewMode('summary')}
           />
@@ -195,8 +217,10 @@ export default function Home() {
         {viewMode === 'summary' && (
           <StepSummary
             sourcePlaylist={selectedPlaylist}
-            spotifyPlaylistUrl={spotifyResultUrl}
-            spotifyPlaylistName={customSpotifyName}
+            targetPlaylistUrl={targetResultUrl}
+            targetPlaylistName={customTargetName}
+            sourcePlatform={sourcePlatform}
+            targetPlatform={targetPlatform}
             reconciliations={reconciliations}
             onMigrateAnother={handleMigrateAnother}
           />

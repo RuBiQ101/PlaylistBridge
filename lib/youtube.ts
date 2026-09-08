@@ -1,6 +1,6 @@
-import { YouTubePlaylist, YouTubeTrack } from './types';
+import { GenericPlaylist, GenericTrack, YouTubeTrackResult } from './types';
 import { parseYouTubeDuration } from './normalization';
-import { MOCK_YOUTUBE_PLAYLISTS, MOCK_YOUTUBE_TRACKS } from './mock-data';
+import { MOCK_YOUTUBE_PLAYLISTS, MOCK_YOUTUBE_TRACKS, searchMockYouTube } from './mock-data';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
@@ -8,6 +8,7 @@ const GOOGLE_REDIRECT_URI =
   process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/youtube/callback';
 
 export const YOUTUBE_SCOPES = [
+  'https://www.googleapis.com/auth/youtube',
   'https://www.googleapis.com/auth/youtube.readonly',
   'https://www.googleapis.com/auth/userinfo.profile',
 ].join(' ');
@@ -125,12 +126,12 @@ export async function getYouTubeChannelProfile(accessToken: string): Promise<{
 export async function fetchUserPlaylists(
   accessToken: string,
   isDemoMode: boolean = false
-): Promise<YouTubePlaylist[]> {
+): Promise<GenericPlaylist[]> {
   if (isDemoMode || !accessToken || accessToken === 'demo_token') {
     return MOCK_YOUTUBE_PLAYLISTS;
   }
 
-  let playlists: YouTubePlaylist[] = [];
+  let playlists: GenericPlaylist[] = [];
 
   // 1. Try to fetch Liked Music auto-playlist (LM or LL)
   try {
@@ -146,11 +147,11 @@ export async function fetchUserPlaylists(
         title: 'Liked Music',
         description: 'Your favorite tracks on YouTube Music (Auto playlist)',
         thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
-        itemCount: 1, // Will stream all liked tracks
+        itemCount: 1,
         channelTitle: 'YouTube Music Auto Playlist',
+        platform: 'youtube',
       });
     } else {
-      // Try LL (Liked Videos)
       const llCheck = await fetch(
         'https://www.googleapis.com/youtube/v3/playlistItems?part=id&playlistId=LL&maxResults=1',
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -163,6 +164,7 @@ export async function fetchUserPlaylists(
           thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
           itemCount: 1,
           channelTitle: 'YouTube Auto Playlist',
+          platform: 'youtube',
         });
       }
     }
@@ -199,6 +201,7 @@ export async function fetchUserPlaylists(
         'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
       itemCount: item.contentDetails?.itemCount || 0,
       channelTitle: item.snippet?.channelTitle || '',
+      platform: 'youtube' as const,
     }));
 
     playlists = playlists.concat(pageItems);
@@ -215,8 +218,7 @@ export async function fetchPlaylistById(
   accessToken: string,
   input: string,
   isDemoMode: boolean = false
-): Promise<YouTubePlaylist | null> {
-  // Extract ID from URL if full link provided
+): Promise<GenericPlaylist | null> {
   let playlistId = input.trim();
   if (playlistId.includes('list=')) {
     const match = playlistId.match(/[?&]list=([^&]+)/);
@@ -234,6 +236,7 @@ export async function fetchPlaylistById(
         thumbnailUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
         itemCount: 10,
         channelTitle: 'YouTube Music',
+        platform: 'youtube',
       }
     );
   }
@@ -260,6 +263,7 @@ export async function fetchPlaylistById(
         'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
       itemCount: item.contentDetails?.itemCount || 0,
       channelTitle: item.snippet?.channelTitle || '',
+      platform: 'youtube',
     };
   } catch (e) {
     return null;
@@ -273,12 +277,12 @@ export async function fetchPlaylistTracks(
   accessToken: string,
   playlistId: string,
   isDemoMode: boolean = false
-): Promise<YouTubeTrack[]> {
+): Promise<GenericTrack[]> {
   if (isDemoMode || !accessToken || accessToken === 'demo_token') {
     return MOCK_YOUTUBE_TRACKS[playlistId] || MOCK_YOUTUBE_TRACKS['yt-pl-synthwave-80s'];
   }
 
-  let tracks: YouTubeTrack[] = [];
+  let tracks: GenericTrack[] = [];
   let nextPageToken: string | undefined = undefined;
 
   do {
@@ -299,7 +303,7 @@ export async function fetchPlaylistTracks(
     const data = await response.json();
     const items = data.items || [];
 
-    const pageTracks: YouTubeTrack[] = items
+    const pageTracks: GenericTrack[] = items
       .filter((item: any) => item.snippet?.title && item.snippet.title !== 'Deleted video' && item.snippet.title !== 'Private video')
       .map((item: any) => ({
         id: item.contentDetails?.videoId || item.id,
@@ -315,7 +319,6 @@ export async function fetchPlaylistTracks(
     nextPageToken = data.nextPageToken;
   } while (nextPageToken && tracks.length < 500);
 
-  // Optional: Batch fetch durations from videos endpoint
   if (tracks.length > 0) {
     try {
       const videoIds = tracks.map((t) => t.id).slice(0, 50).join(',');
@@ -345,4 +348,189 @@ export async function fetchPlaylistTracks(
   }
 
   return tracks;
+}
+
+/**
+ * Creates a new playlist on YouTube Music / YouTube for the user
+ */
+export async function createYouTubePlaylist(
+  accessToken: string,
+  title: string,
+  description: string = 'Migrated from Spotify using PlaylistBridge',
+  isDemoMode: boolean = false
+): Promise<{ id: string; url: string }> {
+  if (isDemoMode || !accessToken || accessToken === 'demo_token') {
+    const fakeId = `mock-yt-pl-${Date.now()}`;
+    return {
+      id: fakeId,
+      url: `https://music.youtube.com/playlist?list=${fakeId}`,
+    };
+  }
+
+  const response = await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      snippet: {
+        title,
+        description,
+      },
+      status: {
+        privacyStatus: 'private',
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Failed to create YouTube playlist: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  return {
+    id: data.id,
+    url: `https://music.youtube.com/playlist?list=${data.id}`,
+  };
+}
+
+/**
+ * Searches YouTube for a track candidate and validates duration (±12s)
+ */
+export async function searchYouTubeTrack(
+  accessToken: string,
+  cleanedTitle: string,
+  cleanedArtist: string,
+  durationSec?: number,
+  isDemoMode: boolean = false
+): Promise<{ track: YouTubeTrackResult | null; reason?: string }> {
+  if (isDemoMode || !accessToken || accessToken === 'demo_token') {
+    return searchMockYouTube(cleanedTitle, cleanedArtist, durationSec);
+  }
+
+  try {
+    const query = `${cleanedTitle} ${cleanedArtist}`;
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=5&q=${encodeURIComponent(query)}`;
+    const searchRes = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!searchRes.ok) {
+      return { track: null, reason: `YouTube search error: ${searchRes.statusText}` };
+    }
+
+    const searchData = await searchRes.json();
+    const items = searchData.items || [];
+
+    if (items.length === 0) {
+      return {
+        track: null,
+        reason: `No matching video found on YouTube for "${cleanedTitle}" by "${cleanedArtist}"`,
+      };
+    }
+
+    const videoIds = items.map((it: any) => it.id?.videoId).filter(Boolean).join(',');
+    const durationMap: Record<string, number> = {};
+
+    if (videoIds) {
+      const vidRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id=${videoIds}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (vidRes.ok) {
+        const vidData = await vidRes.json();
+        for (const v of vidData.items || []) {
+          const dSec = parseYouTubeDuration(v.contentDetails?.duration);
+          if (dSec) durationMap[v.id] = dSec;
+        }
+      }
+    }
+
+    let bestItem = items[0];
+    let bestDiff = Infinity;
+
+    if (durationSec && durationSec > 0) {
+      for (const it of items) {
+        const vId = it.id?.videoId;
+        const dur = durationMap[vId];
+        if (dur) {
+          const diff = Math.abs(dur - durationSec);
+          if (diff <= 12 && diff < bestDiff) {
+            bestDiff = diff;
+            bestItem = it;
+          }
+        }
+      }
+    }
+
+    const bestVideoId = bestItem.id?.videoId || bestItem.id;
+    const bestDuration = durationMap[bestVideoId] || durationSec || 0;
+
+    return {
+      track: {
+        id: bestVideoId,
+        name: bestItem.snippet?.title || `${cleanedTitle} - ${cleanedArtist}`,
+        artist: bestItem.snippet?.channelTitle || cleanedArtist,
+        channelTitle: bestItem.snippet?.channelTitle || '',
+        thumbnailUrl: bestItem.snippet?.thumbnails?.medium?.url || bestItem.snippet?.thumbnails?.default?.url,
+        durationSec: bestDuration,
+        url: `https://music.youtube.com/watch?v=${bestVideoId}`,
+        durationDiffSec: durationSec && bestDuration ? Math.abs(bestDuration - durationSec) : 0,
+      },
+    };
+  } catch (err: any) {
+    return { track: null, reason: err.message || 'Error searching YouTube track' };
+  }
+}
+
+/**
+ * Adds tracks to a YouTube playlist item by item
+ */
+export async function addTracksToYouTubePlaylist(
+  accessToken: string,
+  playlistId: string,
+  videoIds: string[],
+  isDemoMode: boolean = false
+): Promise<{ addedCount: number; errors?: string[] }> {
+  if (isDemoMode || !accessToken || accessToken === 'demo_token') {
+    return { addedCount: videoIds.length };
+  }
+
+  let totalAdded = 0;
+  const errors: string[] = [];
+
+  for (const videoId of videoIds) {
+    if (!videoId) continue;
+    try {
+      const response = await fetch('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          snippet: {
+            playlistId,
+            resourceId: {
+              kind: 'youtube#video',
+              videoId,
+            },
+          },
+        }),
+      });
+
+      if (response.ok) {
+        totalAdded++;
+      } else {
+        const errText = await response.text();
+        errors.push(`Video ${videoId}: ${response.status} ${errText}`);
+      }
+    } catch (e: any) {
+      errors.push(`Video ${videoId}: ${e.message}`);
+    }
+  }
+
+  return { addedCount: totalAdded, errors };
 }

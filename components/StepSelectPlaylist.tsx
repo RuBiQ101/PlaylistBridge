@@ -15,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { GenericPlaylist, PlatformId } from '@/lib/types';
+import { PLATFORMS_CONFIG } from '@/lib/platforms';
 
 interface StepSelectPlaylistProps {
   sourcePlatform?: PlatformId;
@@ -41,18 +42,19 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
   const [isImportingUrl, setIsImportingUrl] = useState<boolean>(false);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const isSpotifySource = sourcePlatform === 'spotify';
-  const sourceName = isSpotifySource ? 'Spotify' : 'YouTube Music';
-  const targetName = targetPlatform === 'youtube' ? 'YouTube Music' : 'Spotify';
+  const sourceConfig = PLATFORMS_CONFIG[sourcePlatform] || PLATFORMS_CONFIG.youtube;
+  const targetConfig = PLATFORMS_CONFIG[targetPlatform] || PLATFORMS_CONFIG.spotify;
+  const sourceName = sourceConfig.name;
+  const targetName = targetConfig.name;
 
   const fetchPlaylists = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const endpoint = isSpotifySource ? '/api/playlists/spotify' : '/api/playlists/youtube';
+      const endpoint = `/api/playlists/${sourcePlatform}`;
       const res = await fetch(endpoint);
       if (!res.ok) {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `Failed to load ${sourceName} playlists`);
       }
       const data = await res.json();
@@ -84,9 +86,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
     setIsImportingUrl(true);
     setImportError(null);
     try {
-      const endpoint = isSpotifySource
-        ? '/api/playlists/spotify/lookup'
-        : '/api/playlists/youtube/lookup';
+      const endpoint = `/api/playlists/${sourcePlatform}/lookup`;
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -95,7 +95,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       });
 
       if (!res.ok) {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `Could not find ${sourceName} playlist`);
       }
 
@@ -125,9 +125,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs font-medium mb-2">
-            <ListMusic
-              className={`w-4 h-4 ${isSpotifySource ? 'text-spotify' : 'text-youtube'}`}
-            />
+            <ListMusic className={`w-4 h-4 ${sourceConfig.color}`} />
             <span>Step 2 of 4 • Select Source Playlist</span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
@@ -152,27 +150,29 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       {/* Paste Playlist URL Bar */}
       <div className="p-4 rounded-2xl glass-panel border border-slate-800 bg-gradient-to-r from-slate-900/80 to-slate-950/80 space-y-3">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <Link
-            className={`w-3.5 h-3.5 ${isSpotifySource ? 'text-spotify' : 'text-red-400'}`}
-          />
+          <Link className={`w-3.5 h-3.5 ${sourceConfig.color}`} />
           <span>Import Any {sourceName} Link or ID</span>
         </div>
         <form onSubmit={handleImportByUrl} className="flex gap-2">
           <input
             type="text"
             placeholder={
-              isSpotifySource
+              sourcePlatform === 'jiosaavn'
+                ? 'Paste JioSaavn playlist/album link (e.g., https://www.jiosaavn.com/featured/...)'
+                : sourcePlatform === 'spotify'
                 ? 'Paste Spotify playlist URL or URI (e.g., https://open.spotify.com/playlist/...)'
+                : sourcePlatform === 'amazon'
+                ? 'Paste Amazon Music playlist URL (e.g., https://music.amazon.com/playlists/...)'
                 : 'Paste YouTube Music playlist link or ID (e.g., https://music.youtube.com/playlist?list=...)'
             }
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
-            className="flex-1 px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-spotify"
+            className="flex-1 px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
           />
           <button
             type="submit"
             disabled={isImportingUrl || !urlInput.trim()}
-            className="px-4 py-2.5 rounded-xl bg-spotify hover:bg-spotify-accent text-black font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
           >
             {isImportingUrl ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -325,19 +325,21 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
 
             <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs text-slate-400 flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold shrink-0 ${
-                  isSpotifySource
-                    ? 'bg-emerald-600/10 border border-emerald-500/20 text-emerald-400'
-                    : 'bg-red-600/10 border border-red-500/20 text-red-400'
-                }`}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${sourceConfig.bgColor} border ${sourceConfig.borderColor} ${sourceConfig.color}`}
               >
-                {isSpotifySource ? 'SP' : 'YT'}
+                {sourcePlatform === 'youtube'
+                  ? 'YT'
+                  : sourcePlatform === 'spotify'
+                  ? 'SP'
+                  : sourcePlatform === 'amazon'
+                  ? 'AZ'
+                  : 'JS'}
               </div>
               <div className="overflow-hidden">
                 <p className="text-white font-semibold truncate">{selectedPlaylist.title}</p>
                 <p className="truncate text-[11px]">
                   {selectedPlaylist.itemCount > 0 ? `${selectedPlaylist.itemCount} items • ` : ''}
-                  Duration Matching (±12s)
+                  {sourceName} ➔ {targetName}
                 </p>
               </div>
             </div>

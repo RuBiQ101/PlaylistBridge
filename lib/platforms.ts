@@ -26,6 +26,14 @@ import {
   searchSpotifyTrack,
   addTracksToSpotifyPlaylist,
 } from './spotify';
+import {
+  fetchJioSaavnPlaylists,
+  fetchJioSaavnPlaylistById,
+  fetchJioSaavnPlaylistTracks,
+  searchJioSaavnTrack,
+  createJioSaavnPlaylist,
+  addTracksToJioSaavnPlaylist,
+} from './jiosaavn';
 
 export interface PlatformConfig {
   id: PlatformId;
@@ -109,7 +117,7 @@ export async function fetchPlatformPlaylists(
     return MOCK_AMAZON_PLAYLISTS;
   }
   if (platform === 'jiosaavn') {
-    return MOCK_JIOSAAVN_PLAYLISTS;
+    return fetchJioSaavnPlaylists(accessToken, isDemoMode);
   }
   return [];
 }
@@ -128,6 +136,9 @@ export async function fetchPlatformPlaylistById(
   }
   if (platform === 'spotify') {
     return fetchSpotifyPlaylistById(accessToken, input, isDemoMode);
+  }
+  if (platform === 'jiosaavn') {
+    return fetchJioSaavnPlaylistById(accessToken, input, isDemoMode);
   }
 
   const pConfig = PLATFORMS_CONFIG[platform] || PLATFORMS_CONFIG['spotify'];
@@ -157,6 +168,9 @@ export async function fetchPlatformPlaylistTracks(
   }
   if (platform === 'spotify') {
     return fetchSpotifyPlaylistTracks(accessToken, playlistId, isDemoMode);
+  }
+  if (platform === 'jiosaavn') {
+    return fetchJioSaavnPlaylistTracks(accessToken, playlistId, isDemoMode);
   }
   return COMMON_TEST_TRACKS;
 }
@@ -220,6 +234,10 @@ export async function searchPlatformTrack(
     };
   }
 
+  if (platform === 'jiosaavn') {
+    return searchJioSaavnTrack(accessToken, cleanedTitle, cleanedArtist, durationSec, isDemoMode);
+  }
+
   // Universal search across all platforms
   return searchMockUniversal(platform, cleanedTitle, cleanedArtist, durationSec);
 }
@@ -240,6 +258,9 @@ export async function createPlatformPlaylist(
   }
   if (platform === 'spotify' && accessToken && accessToken !== 'demo_token') {
     return createSpotifyPlaylist(accessToken, userId, title, description, false);
+  }
+  if (platform === 'jiosaavn') {
+    return createJioSaavnPlaylist(accessToken, userId, title, description, isDemoMode);
   }
 
   const fakeId = `${platform}-pl-${Date.now()}`;
@@ -267,6 +288,9 @@ export async function addTracksToPlatformPlaylist(
   }
   if (platform === 'spotify' && accessToken && accessToken !== 'demo_token') {
     return addTracksToSpotifyPlaylist(accessToken, playlistId, trackIdsOrUris, false);
+  }
+  if (platform === 'jiosaavn') {
+    return addTracksToJioSaavnPlaylist(accessToken, playlistId, trackIdsOrUris, isDemoMode);
   }
 
   return { addedCount: trackIdsOrUris.length };

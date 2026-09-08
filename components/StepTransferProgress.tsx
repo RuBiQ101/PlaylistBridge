@@ -14,6 +14,7 @@ import {
   Check,
 } from 'lucide-react';
 import { MigrationProgressEvent, PlatformId, TrackReconciliation } from '@/lib/types';
+import { PLATFORMS_CONFIG } from '@/lib/platforms';
 
 interface StepTransferProgressProps {
   progressEvents: MigrationProgressEvent[];
@@ -41,9 +42,10 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
     terminalBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [progressEvents]);
 
-  const isSpotifyToYouTube = sourcePlatform === 'spotify' && targetPlatform === 'youtube';
-  const sourceName = sourcePlatform === 'spotify' ? 'Spotify' : 'YouTube Music';
-  const targetName = targetPlatform === 'youtube' ? 'YouTube Music' : 'Spotify';
+  const sourceConfig = PLATFORMS_CONFIG[sourcePlatform] || PLATFORMS_CONFIG.youtube;
+  const targetConfig = PLATFORMS_CONFIG[targetPlatform] || PLATFORMS_CONFIG.spotify;
+  const sourceName = sourceConfig.name;
+  const targetName = targetConfig.name;
 
   const total = latestEvent?.totalTracks || 1;
   const current = latestEvent?.currentIndex || 0;
@@ -61,11 +63,7 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
           {isComplete ? (
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           ) : (
-            <Loader2
-              className={`w-4 h-4 animate-spin ${
-                targetPlatform === 'youtube' ? 'text-red-500' : 'text-spotify'
-              }`}
-            />
+            <Loader2 className={`w-4 h-4 animate-spin ${targetConfig.color}`} />
           )}
           <span>
             {isComplete
@@ -322,7 +320,11 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
             className={`w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-sm transition-all shadow-lg scale-100 hover:scale-[1.02] cursor-pointer ${
               targetPlatform === 'youtube'
                 ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/50'
-                : 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/50'
+                : targetPlatform === 'spotify'
+                ? 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/50'
+                : targetPlatform === 'amazon'
+                ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-cyan-950/50'
+                : 'bg-teal-500 hover:bg-teal-400 text-white shadow-teal-950/50'
             }`}
           >
             View Summary & {targetName} Playlist

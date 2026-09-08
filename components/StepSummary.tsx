@@ -15,6 +15,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { GenericPlaylist, PlatformId, TrackReconciliation } from '@/lib/types';
+import { PLATFORMS_CONFIG } from '@/lib/platforms';
 
 interface StepSummaryProps {
   sourcePlaylist: GenericPlaylist | null;
@@ -42,10 +43,13 @@ export const StepSummary: React.FC<StepSummaryProps> = ({
   const [filter, setFilter] = useState<'all' | 'matched' | 'unmatched'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const sourceConfig = PLATFORMS_CONFIG[sourcePlatform] || PLATFORMS_CONFIG.youtube;
+  const targetConfig = PLATFORMS_CONFIG[targetPlatform] || PLATFORMS_CONFIG.spotify;
+  const sourceName = sourceConfig.name;
+  const targetName = targetConfig.name;
+
   const finalTargetUrl = targetPlaylistUrl || spotifyPlaylistUrl;
   const finalTargetName = targetPlaylistName || spotifyPlaylistName;
-  const sourceName = sourcePlatform === 'spotify' ? 'Spotify' : 'YouTube Music';
-  const targetName = targetPlatform === 'youtube' ? 'YouTube Music' : 'Spotify';
 
   const total = reconciliations.length;
   const matched = reconciliations.filter((r) => r.status === 'MATCHED').length;
@@ -166,7 +170,11 @@ export const StepSummary: React.FC<StepSummaryProps> = ({
                 className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-black text-sm transition-all shadow-xl scale-100 hover:scale-[1.03] cursor-pointer ${
                   targetPlatform === 'youtube'
                     ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/60'
-                    : 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/60'
+                    : targetPlatform === 'spotify'
+                    ? 'bg-spotify hover:bg-spotify-accent text-black shadow-emerald-950/60'
+                    : targetPlatform === 'amazon'
+                    ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-cyan-950/60'
+                    : 'bg-teal-500 hover:bg-teal-400 text-white shadow-teal-950/60'
                 }`}
               >
                 <span>Open in {targetName}</span>

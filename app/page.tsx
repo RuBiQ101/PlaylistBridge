@@ -266,10 +266,14 @@ export default function Home() {
             <span>•</span>
             <span>© 2026 RuBiQ. All rights reserved.</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px]">
-            <span>Spotify Web API</span>
+          <div className="flex flex-wrap items-center gap-4 text-[11px]">
+            <span>YouTube Music</span>
             <span>•</span>
-            <span>YouTube Data API v3</span>
+            <span>Spotify</span>
+            <span>•</span>
+            <span>Amazon Music</span>
+            <span>•</span>
+            <span>JioSaavn</span>
             <span>•</span>
             <span>Duration Filter (±12s)</span>
           </div>

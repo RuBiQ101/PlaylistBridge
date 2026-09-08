@@ -16,8 +16,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onGoHome }) => {
           className="flex items-center gap-3 group transition-all duration-200 hover:opacity-95 cursor-pointer text-left"
           title="Return to Home Screen"
         >
-          <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-700/60 shadow-lg shadow-emerald-950/40 shrink-0 group-hover:scale-105 group-hover:border-emerald-500/50 transition-all duration-300">
-            <img src="/logo.jpg" alt="PlaylistBridge Logo" className="w-full h-full object-cover" />
+          <div className="w-10 h-10 max-w-[40px] max-h-[40px] rounded-xl overflow-hidden border border-slate-700/60 shadow-lg shadow-emerald-950/40 shrink-0 group-hover:scale-105 group-hover:border-emerald-500/50 transition-all duration-300">
+            <img
+              src="/logo.jpg"
+              alt="PlaylistBridge Logo"
+              width={40}
+              height={40}
+              style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+              className="w-10 h-10 object-cover"
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">

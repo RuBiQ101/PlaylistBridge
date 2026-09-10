@@ -4,6 +4,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'PlaylistBridge - Migrate YouTube Music to Spotify',
   description: 'Seamlessly transfer and synchronize your playlists from YouTube Music to Spotify with intelligent metadata cleaning, fuzzy matching, and live real-time progress.',
+  icons: {
+    icon: '/logo.jpg',
+    apple: '/logo.jpg',
+  },
 };
 
 export default function RootLayout({

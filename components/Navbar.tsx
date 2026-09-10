@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-2.5 sm:gap-3 group transition-transform active:scale-95 cursor-pointer text-left"
           title="Return to Home Screen"
         >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border border-white/20 shadow-md shadow-emerald-950/40 shrink-0 group-hover:scale-105 transition-all duration-300">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-[9px] sm:rounded-[10px] overflow-hidden border border-white/20 shadow-md shadow-emerald-950/40 shrink-0 group-hover:scale-105 transition-all duration-300 bg-slate-900">
             <img
               src="/logo.jpg"
               alt="PlaylistBridge Logo"

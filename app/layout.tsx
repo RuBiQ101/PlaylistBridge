@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 
 export const metadata: Metadata = {
   title: 'PlaylistBridge - Migrate YouTube Music to Spotify',
@@ -15,9 +16,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? '';
+
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-[#050811] text-slate-100 antialiased selection:bg-spotify selection:text-black overflow-x-hidden">
+        {/* Google Analytics 4 — set NEXT_PUBLIC_GA_MEASUREMENT_ID in Render env vars */}
+        <GoogleAnalytics measurementId={gaMeasurementId} />
         {/* God-level Ambient Aurora Glass Backdrops */}
         <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/40 via-[#050811] to-[#020408] -z-10" />
         <div className="fixed -top-32 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-emerald-500/12 via-teal-500/10 to-transparent rounded-full blur-[120px] pointer-events-none -z-10 animate-aurora-1 transform-gpu" />

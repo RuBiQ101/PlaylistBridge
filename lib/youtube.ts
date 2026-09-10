@@ -8,7 +8,6 @@ const GOOGLE_REDIRECT_URI =
   process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/youtube/callback';
 
 export const YOUTUBE_SCOPES = [
-  'https://www.googleapis.com/auth/youtube',
   'https://www.googleapis.com/auth/youtube.readonly',
   'https://www.googleapis.com/auth/userinfo.profile',
 ].join(' ');

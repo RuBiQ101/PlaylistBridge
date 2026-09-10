@@ -84,18 +84,18 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
       </div>
 
       {/* KPI Counters Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
         {/* Total Tracks */}
-        <div className="p-4 rounded-2xl glass-panel border border-slate-800 text-center">
-          <p className="text-xs text-slate-400 font-medium mb-1">Total Tracks</p>
-          <p className="text-2xl font-black text-white">{total}</p>
+        <div className="p-3 sm:p-4 rounded-[20px] ios-bubble-card text-center">
+          <p className="text-[10px] sm:text-xs text-slate-400 font-medium mb-0.5">Total Tracks</p>
+          <p className="text-xl sm:text-2xl font-black text-white">{total}</p>
         </div>
 
         {/* Progress */}
-        <div className="p-4 rounded-2xl glass-panel border border-slate-800 text-center">
-          <p className="text-xs text-slate-400 font-medium mb-1">Progress</p>
+        <div className="p-3 sm:p-4 rounded-[20px] ios-bubble-card text-center">
+          <p className="text-[10px] sm:text-xs text-slate-400 font-medium mb-0.5">Progress</p>
           <p
-            className={`text-2xl font-black ${
+            className={`text-xl sm:text-2xl font-black ${
               targetPlatform === 'youtube' ? 'text-red-400' : 'text-spotify'
             }`}
           >
@@ -104,20 +104,20 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
         </div>
 
         {/* Matched */}
-        <div className="p-4 rounded-2xl glass-panel border border-emerald-900/30 text-center">
-          <p className="text-xs text-emerald-400 font-medium mb-1">Matched</p>
-          <p className="text-2xl font-black text-emerald-400">{matched}</p>
+        <div className="p-3 sm:p-4 rounded-[20px] ios-bubble-card border border-emerald-500/20 text-center">
+          <p className="text-[10px] sm:text-xs text-emerald-400 font-medium mb-0.5">Matched</p>
+          <p className="text-xl sm:text-2xl font-black text-emerald-400">{matched}</p>
         </div>
 
         {/* Unmatched */}
-        <div className="p-4 rounded-2xl glass-panel border border-amber-900/30 text-center">
-          <p className="text-xs text-amber-400 font-medium mb-1">Unmatched</p>
-          <p className="text-2xl font-black text-amber-400">{unmatched}</p>
+        <div className="p-3 sm:p-4 rounded-[20px] ios-bubble-card border border-amber-500/20 text-center">
+          <p className="text-[10px] sm:text-xs text-amber-400 font-medium mb-0.5">Unmatched</p>
+          <p className="text-xl sm:text-2xl font-black text-amber-400">{unmatched}</p>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="space-y-2 p-6 rounded-2xl glass-panel border border-slate-800">
+      <div className="space-y-2 p-4 sm:p-5 rounded-[24px] ios-bubble-card">
         <div className="flex items-center justify-between text-xs font-semibold">
           <span className="text-slate-300 flex items-center gap-2">
             {!isComplete && (
@@ -127,10 +127,10 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
                 }`}
               />
             )}
-            <span>{latestEvent?.message || 'Processing migration...'}</span>
+            <span className="text-[11px] sm:text-xs">{latestEvent?.message || 'Processing migration...'}</span>
           </span>
           <span
-            className={`font-mono ${
+            className={`font-mono text-[11px] sm:text-xs ${
               targetPlatform === 'youtube' ? 'text-red-400' : 'text-spotify'
             }`}
           >
@@ -139,7 +139,7 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
         </div>
 
         {/* Bar */}
-        <div className="w-full h-3.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
+        <div className="w-full h-3 bg-slate-900/80 rounded-full overflow-hidden p-0.5 border border-white/[0.08]">
           <div
             className={`h-full rounded-full transition-all duration-300 ease-out shadow-lg ${
               targetPlatform === 'youtube'
@@ -301,14 +301,14 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
 
       {/* Completion Action */}
       {isComplete && (
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 sm:p-5 rounded-[24px] ios-bubble-card border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-              <Check className="w-6 h-6" />
+            <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <Check className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base">Migration Completed!</h3>
-              <p className="text-xs text-slate-300">
+              <h3 className="font-bold text-white text-sm sm:text-base">Migration Completed!</h3>
+              <p className="text-[11px] sm:text-xs text-slate-300">
                 Matched {matched} of {total} tracks ({Math.round((matched / total) * 100)}% match
                 rate).
               </p>
@@ -317,7 +317,7 @@ export const StepTransferProgress: React.FC<StepTransferProgressProps> = ({
 
           <button
             onClick={onViewSummary}
-            className={`w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-sm transition-all shadow-lg scale-100 hover:scale-[1.02] cursor-pointer ${
+            className={`w-full sm:w-auto px-5 py-2.5 rounded-full font-bold text-xs sm:text-sm ios-btn shadow-lg cursor-pointer ${
               targetPlatform === 'youtube'
                 ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/50'
                 : targetPlatform === 'spotify'

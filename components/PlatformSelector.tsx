@@ -218,30 +218,30 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     return (
       <div
         key={platformId + role}
-        className={`relative rounded-3xl p-6 glass-panel transition-all duration-300 flex flex-col justify-between border ${
+        className={`relative rounded-[26px] p-4 sm:p-5 ios-bubble-card flex flex-col justify-between border ${
           isConnected
-            ? `${cfg.borderColor} bg-gradient-to-b ${cfg.bgColor} to-slate-900/50 shadow-xl`
+            ? `${cfg.borderColor} bg-gradient-to-b ${cfg.bgColor} to-slate-900/60 shadow-xl`
             : 'border-slate-800 hover:border-slate-700 bg-slate-900/40'
         }`}
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Header / Logo */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <div
-                className={`w-12 h-12 rounded-2xl ${cfg.bgColor} border ${cfg.borderColor} flex items-center justify-center shadow-lg`}
+                className={`w-9 h-9 rounded-xl ${cfg.bgColor} border ${cfg.borderColor} flex items-center justify-center shadow-md`}
               >
-                {opt.iconSvg('w-7 h-7')}
+                {opt.iconSvg('w-5 h-5')}
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">{cfg.name}</h3>
-                <p className="text-xs text-slate-400">{role} Platform</p>
+                <h3 className="text-base font-bold text-white">{cfg.name}</h3>
+                <p className="text-[11px] text-slate-400">{role} Platform</p>
               </div>
             </div>
 
             {/* Status Badge */}
             <div
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+              className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
                 isConnected
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                   : 'bg-slate-800 text-slate-400 border border-slate-700'
@@ -249,12 +249,12 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             >
               {isConnected ? (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <CheckCircle2 className="w-3 h-3" />
                   <span>Connected</span>
                 </>
               ) : (
                 <>
-                  <XCircle className="w-3.5 h-3.5 text-slate-500" />
+                  <XCircle className="w-3 h-3 text-slate-500" />
                   <span>Disconnected</span>
                 </>
               )}
@@ -386,30 +386,29 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       </div>
 
       {/* Main Title */}
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
           Where would you like to transfer your music?
         </h1>
-        <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
-          Choose the source platform where your playlists currently live, and the destination
-          platform you want to migrate them to.
+        <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto">
+          Choose the source platform where your playlists currently live, and the destination platform to migrate them to.
         </p>
       </div>
 
       {/* ================= Step A: Visual Route Selector Grid ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-11 gap-4 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-11 gap-3 sm:gap-4 items-center">
         {/* Source Platform Grid (5 Cols) */}
-        <div className="lg:col-span-5 space-y-3 p-5 rounded-3xl bg-slate-900/60 border border-slate-800 shadow-xl">
+        <div className="lg:col-span-5 space-y-2.5 p-3.5 sm:p-5 rounded-[26px] ios-bubble-card shadow-xl">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
               1. Transfer From (Source)
             </span>
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 font-semibold">
-              Source: {sourceConfig.name}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800/90 text-slate-200 border border-white/10 font-bold">
+              {sourceConfig.name}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 gap-2">
             {platformList.map((p) => {
               const isSelected = sourceId === p.id;
               const cfg = PLATFORMS_CONFIG[p.id];
@@ -419,24 +418,24 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                 <button
                   key={p.id}
                   onClick={() => handleSourceSelect(p.id)}
-                  className={`p-3.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[95px] ${
+                  className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[78px] active:scale-95 cursor-pointer ${
                     isSelected
-                      ? `${cfg.borderColor} bg-gradient-to-b ${cfg.bgColor} to-slate-950 shadow-lg scale-[1.02]`
-                      : 'border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-900/60 cursor-pointer'
+                      ? `${cfg.borderColor} bg-gradient-to-b ${cfg.bgColor} to-slate-950 shadow-md ring-1 ring-white/15`
+                      : 'border-white/[0.08] bg-slate-950/60 hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="p-1.5 rounded-xl bg-slate-900 border border-slate-800">
-                      {p.iconSvg('w-4 h-4')}
+                    <div className="p-1 rounded-lg bg-slate-900 border border-white/10">
+                      {p.iconSvg('w-3.5 h-3.5')}
                     </div>
                     {isSelected && (
-                      <div className="w-4 h-4 rounded-full bg-emerald-500 text-black flex items-center justify-center font-bold">
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 text-black flex items-center justify-center font-bold">
+                        <Check className="w-2 h-2 stroke-[3]" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-white line-clamp-1">{p.name}</p>
+                    <p className="text-[11px] font-bold text-white line-clamp-1">{p.name}</p>
                     <div className="flex items-center gap-1 mt-0.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${isLinked ? 'bg-emerald-400' : 'bg-slate-600'}`} />
                       <p className="text-[9px] text-slate-400">{isLinked ? 'Connected' : 'Ready'}</p>
@@ -449,31 +448,31 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
         </div>
 
         {/* Center Transfer Arrow & Swap Button (1 Col) */}
-        <div className="lg:col-span-1 flex flex-col items-center justify-center py-2 lg:py-0">
+        <div className="lg:col-span-1 flex flex-col items-center justify-center py-1 lg:py-0">
           <button
             onClick={handleSwap}
             title="Click to swap transfer direction"
-            className="group w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 border border-slate-700 hover:border-spotify/80 hover:bg-slate-800 shadow-xl flex items-center justify-center text-spotify transition-all cursor-pointer hover:scale-110 active:scale-95"
+            className="ios-btn group w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-900/90 border border-white/15 shadow-xl flex items-center justify-center text-spotify transition-all cursor-pointer"
           >
-            <ArrowRightLeft className="w-6 h-6 group-hover:rotate-180 transition-transform duration-300" />
+            <ArrowRightLeft className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
           </button>
-          <span className="text-[10px] text-slate-500 mt-1 font-medium hidden lg:inline">
-            Click to swap
+          <span className="text-[9px] text-slate-500 mt-1 font-medium hidden lg:inline">
+            Swap
           </span>
         </div>
 
         {/* Destination Platform Grid (5 Cols) */}
-        <div className="lg:col-span-5 space-y-3 p-5 rounded-3xl bg-slate-900/60 border border-slate-800 shadow-xl">
+        <div className="lg:col-span-5 space-y-2.5 p-3.5 sm:p-5 rounded-[26px] ios-bubble-card shadow-xl">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
               2. Transfer To (Destination)
             </span>
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 font-semibold">
-              Target: {targetConfig.name}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800/90 text-slate-200 border border-white/10 font-bold">
+              {targetConfig.name}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 gap-2">
             {platformList.map((p) => {
               const isSelected = targetId === p.id;
               const cfg = PLATFORMS_CONFIG[p.id];
@@ -483,24 +482,24 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                 <button
                   key={p.id}
                   onClick={() => handleTargetSelect(p.id)}
-                  className={`p-3.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[95px] ${
+                  className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[78px] active:scale-95 cursor-pointer ${
                     isSelected
-                      ? `${cfg.borderColor} bg-gradient-to-b ${cfg.bgColor} to-slate-950 shadow-lg scale-[1.02]`
-                      : 'border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-900/60 cursor-pointer'
+                      ? `${cfg.borderColor} bg-gradient-to-b ${cfg.bgColor} to-slate-950 shadow-md ring-1 ring-white/15`
+                      : 'border-white/[0.08] bg-slate-950/60 hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="p-1.5 rounded-xl bg-slate-900 border border-slate-800">
-                      {p.iconSvg('w-4 h-4')}
+                    <div className="p-1 rounded-lg bg-slate-900 border border-white/10">
+                      {p.iconSvg('w-3.5 h-3.5')}
                     </div>
                     {isSelected && (
-                      <div className="w-4 h-4 rounded-full bg-spotify text-black flex items-center justify-center font-bold">
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 text-black flex items-center justify-center font-bold">
+                        <Check className="w-2 h-2 stroke-[3]" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-white line-clamp-1">{p.name}</p>
+                    <p className="text-[11px] font-bold text-white line-clamp-1">{p.name}</p>
                     <div className="flex items-center gap-1 mt-0.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${isLinked ? 'bg-emerald-400' : 'bg-slate-600'}`} />
                       <p className="text-[9px] text-slate-400">{isLinked ? 'Connected' : 'Ready'}</p>
@@ -514,47 +513,45 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       </div>
 
       {/* Selected Route Summary Banner */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/20 via-slate-900 to-emerald-950/20 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className={`text-sm font-bold ${sourceConfig.color}`}>
-              {sourceConfig.name}
-            </span>
-            <ArrowRight className="w-4 h-4 text-slate-500" />
-            <span className={`text-sm font-bold ${targetConfig.color}`}>
-              {targetConfig.name}
-            </span>
-          </div>
-          <span className="text-xs text-slate-400 hidden md:inline">
-            • Universal Audio Matching & Migration Pipeline
+      <div className="p-3 sm:p-3.5 rounded-full ios-pill bg-slate-900/60 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold ${sourceConfig.color}`}>
+            {sourceConfig.name}
+          </span>
+          <ArrowRight className="w-3 h-3 text-slate-500" />
+          <span className={`text-xs font-bold ${targetConfig.color}`}>
+            {targetConfig.name}
+          </span>
+          <span className="text-[10px] text-slate-400 hidden md:inline">
+            • Universal Audio Matching
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="px-3 py-1 rounded-full font-semibold border bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-            ✓ Universal Bridge Active & Ready
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold border bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+            ✓ Ready for Transfer
           </span>
         </div>
       </div>
 
       {/* ================= Step B: Live Account Connection Cards ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
         {renderConnectionCard(sourceId, 'Source')}
         {renderConnectionCard(targetId, 'Destination')}
       </div>
 
       {/* Bottom Step Advancement Button */}
-      <div className="pt-4 flex justify-end">
+      <div className="pt-2 flex justify-end">
         <button
           onClick={() => onProceed(sourceId, targetId)}
           disabled={!canProceed}
-          className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-sm transition-all ${
+          className={`ios-btn flex items-center gap-2 px-6 sm:px-8 py-3 rounded-full font-bold text-xs sm:text-sm transition-all ${
             canProceed
-              ? 'bg-gradient-to-r from-emerald-500 to-spotify hover:from-emerald-400 hover:to-spotify-accent text-black shadow-lg shadow-emerald-950/50 cursor-pointer scale-100 hover:scale-[1.02]'
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black shadow-lg shadow-emerald-950/50 cursor-pointer'
               : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/50'
           }`}
         >
           <span>Continue to Select Playlists</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

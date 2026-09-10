@@ -147,27 +147,27 @@ export const StepSummary: React.FC<StepSummaryProps> = ({
       </div>
 
       {/* Main Stats Card with Action Button */}
-      <div className="p-8 rounded-3xl glass-panel border border-emerald-500/30 bg-gradient-to-b from-emerald-950/20 via-slate-900/40 to-slate-900/60 shadow-2xl relative overflow-hidden">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 text-center md:text-left">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
+      <div className="p-5 sm:p-7 rounded-[28px] ios-bubble-card border border-emerald-500/30 bg-gradient-to-b from-emerald-950/20 via-slate-900/40 to-slate-900/60 shadow-2xl relative overflow-hidden">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-5 relative z-10">
+          <div className="space-y-1.5 text-center md:text-left">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">
               New {targetName} Playlist Ready
             </span>
-            <h2 className="text-2xl font-black text-white">
+            <h2 className="text-xl sm:text-2xl font-black text-white">
               {finalTargetName || sourcePlaylist?.title || 'Migrated Playlist'}
             </h2>
-            <p className="text-xs text-slate-300">
+            <p className="text-[11px] sm:text-xs text-slate-300">
               {matched} tracks transferred ({matchRate}% match accuracy) • Duration-verified (±12s)
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
             {finalTargetUrl && (
               <a
                 href={finalTargetUrl}
                 target="_blank"
                 rel="noreferrer"
-                className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-black text-sm transition-all shadow-xl scale-100 hover:scale-[1.03] cursor-pointer ${
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-xs sm:text-sm ios-btn shadow-xl cursor-pointer ${
                   targetPlatform === 'youtube'
                     ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-950/60'
                     : targetPlatform === 'spotify'
@@ -178,75 +178,75 @@ export const StepSummary: React.FC<StepSummaryProps> = ({
                 }`}
               >
                 <span>Open in {targetName}</span>
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3.5 h-3.5" />
               </a>
             )}
 
             <button
               onClick={exportCSV}
-              className="flex items-center gap-2 px-4 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full ios-btn bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
             >
-              <Download className="w-4 h-4" />
-              <span>Export CSV Audit</span>
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Reconciled Tracks Table with Filters */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+      <div className="space-y-3.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Filter Pills */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition ios-btn cursor-pointer ${
                 filter === 'all'
                   ? 'bg-white text-black'
-                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-white'
+                  : 'bg-slate-900/80 text-slate-400 border border-white/[0.08] hover:text-white'
               }`}
             >
-              All Tracks ({total})
+              All ({total})
             </button>
             <button
               onClick={() => setFilter('matched')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition flex items-center gap-1.5 ios-btn cursor-pointer ${
                 filter === 'matched'
                   ? 'bg-emerald-500 text-black'
-                  : 'bg-slate-900/80 text-emerald-400 border border-slate-800 hover:bg-emerald-950/30'
+                  : 'bg-slate-900/80 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-950/30'
               }`}
             >
-              <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <Check className="w-3 h-3 stroke-[3]" />
               <span>Matched ({matched})</span>
             </button>
             <button
               onClick={() => setFilter('unmatched')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition flex items-center gap-1.5 ios-btn cursor-pointer ${
                 filter === 'unmatched'
                   ? 'bg-amber-500 text-black'
-                  : 'bg-slate-900/80 text-amber-400 border border-slate-800 hover:bg-amber-950/30'
+                  : 'bg-slate-900/80 text-amber-400 border border-amber-500/20 hover:bg-amber-950/30'
               }`}
             >
-              <X className="w-3.5 h-3.5 stroke-[3]" />
+              <X className="w-3 h-3 stroke-[3]" />
               <span>Unmatched ({unmatched})</span>
             </button>
           </div>
 
           {/* Quick Search */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search audited tracks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64 pl-9 pr-3.5 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-spotify"
+              className="w-full sm:w-60 pl-8 pr-3 py-1.5 bg-slate-900/80 border border-white/[0.08] rounded-full text-xs text-white placeholder-slate-500 focus:outline-none focus:border-spotify"
             />
           </div>
         </div>
 
         {/* Table Card */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 overflow-hidden glass-panel">
+        <div className="rounded-[24px] ios-bubble-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
@@ -369,12 +369,12 @@ export const StepSummary: React.FC<StepSummaryProps> = ({
       </div>
 
       {/* Footer Return Action */}
-      <div className="pt-6 flex items-center justify-between border-t border-slate-800">
+      <div className="pt-4 flex items-center justify-between border-t border-white/[0.08]">
         <button
           onClick={onMigrateAnother}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold text-xs transition cursor-pointer"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full ios-btn bg-slate-900/80 hover:bg-slate-800 border border-white/[0.08] text-slate-200 font-bold text-xs transition cursor-pointer"
         >
-          <RotateCcw className="w-4 h-4" />
+          <RotateCcw className="w-3.5 h-3.5" />
           <span>Migrate Another Playlist</span>
         </button>
       </div>

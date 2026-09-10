@@ -145,54 +145,53 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       : authStatus?.jiosaavn?.displayName;
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-5 sm:space-y-7 max-w-5xl mx-auto px-2 sm:px-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs font-medium mb-2">
-            <ListMusic className={`w-4 h-4 ${sourceConfig.color}`} />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full ios-pill bg-slate-900/80 text-[11px] font-bold text-slate-300 mb-1.5">
+            <ListMusic className={`w-3.5 h-3.5 ${sourceConfig.color}`} />
             <span>Step 2 of 4 • Select Source Playlist</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
             Choose a {sourceName} Playlist
           </h1>
-          <p className="text-slate-400 text-sm">
-            Select from your {sourceName} library or paste any playlist link to transfer to{' '}
-            {targetName}.
+          <p className="text-slate-400 text-xs sm:text-sm">
+            Select from your {sourceName} library or paste any playlist link to transfer to {targetName}.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={fetchPlaylists}
             disabled={isLoading}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 text-slate-300 text-xs font-medium transition cursor-pointer"
+            className="ios-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 text-xs font-semibold cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
       </div>
 
       {/* Library Sync & Account Status Banner */}
-      <div className="p-4 rounded-2xl glass-panel border border-slate-800 bg-slate-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+      <div className="p-3 sm:p-4 rounded-[22px] ios-bubble-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-bold text-white">
                 {isConnected
                   ? `Connected: ${userDisplayName || `${sourceName} Account`}`
                   : `Curated ${sourceName} Library`}
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-semibold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 border border-white/10 text-slate-300 font-semibold">
                 {playlists.length} Playlists • {totalLibrarySongs.toLocaleString()} Songs
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
               {isConnected
-                ? `Synchronized live with your ${sourceName} account and cloud playlists.`
-                : `Showing all playlists with rich track collections (including "my mix 1" [527 tracks], "Chill" [120 tracks], "playback" [68 tracks]).`}
+                ? `Synchronized live with your ${sourceName} cloud account.`
+                : `Showing library playlists (including "my mix 1", "Chill", "playback", "Music").`}
             </p>
           </div>
         </div>
@@ -200,21 +199,21 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
         {!isConnected && (
           <a
             href={sourceConfig.connectUrl}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-lg transition cursor-pointer shrink-0 ${
+            className={`ios-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white shadow-md cursor-pointer shrink-0 ${
               sourcePlatform === 'youtube'
                 ? 'bg-red-600 hover:bg-red-500'
                 : 'bg-emerald-600 hover:bg-emerald-500'
             }`}
           >
-            <span>Connect Live Account</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>Connect Account</span>
+            <ArrowRight className="w-3 h-3" />
           </a>
         )}
       </div>
 
       {/* Paste Playlist URL Bar */}
-      <div className="p-4 rounded-2xl glass-panel border border-slate-800 bg-gradient-to-r from-slate-900/80 to-slate-950/80 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+      <div className="p-3 sm:p-4 rounded-[22px] ios-bubble-card space-y-2.5">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
           <Link className={`w-3.5 h-3.5 ${sourceConfig.color}`} />
           <span>Import Any {sourceName} Link or ID</span>
         </div>
@@ -223,26 +222,26 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
             type="text"
             placeholder={
               sourcePlatform === 'jiosaavn'
-                ? 'Paste JioSaavn playlist/album link (e.g., https://www.jiosaavn.com/featured/...)'
+                ? 'Paste JioSaavn link (e.g., https://www.jiosaavn.com/featured/...)'
                 : sourcePlatform === 'spotify'
-                ? 'Paste Spotify playlist URL or URI (e.g., https://open.spotify.com/playlist/...)'
+                ? 'Paste Spotify playlist URL or URI'
                 : sourcePlatform === 'amazon'
-                ? 'Paste Amazon Music playlist URL (e.g., https://music.amazon.com/playlists/...)'
-                : 'Paste YouTube Music playlist link or ID (e.g., https://music.youtube.com/playlist?list=...)'
+                ? 'Paste Amazon Music playlist URL'
+                : 'Paste YouTube Music playlist link or ID'
             }
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
-            className="flex-1 px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            className="flex-1 px-3.5 py-2 bg-slate-950/80 border border-white/10 rounded-full text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
           />
           <button
             type="submit"
             disabled={isImportingUrl || !urlInput.trim()}
-            className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+            className="ios-btn px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs flex items-center gap-1 transition disabled:opacity-50 cursor-pointer shrink-0"
           >
             {isImportingUrl ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2 className="w-3 h-3 animate-spin" />
             ) : (
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3 h-3" />
             )}
             <span>Import</span>
           </button>
@@ -251,35 +250,35 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       </div>
 
       {/* Search and Filters */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder={`Filter ${sourceName} playlists by title...`}
+            placeholder={`Filter ${sourceName} playlists...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-spotify/60 focus:ring-1 focus:ring-spotify/60 transition"
+            className="w-full pl-9 pr-4 py-2 bg-slate-900/90 border border-white/10 rounded-full text-xs text-white placeholder-slate-500 focus:outline-none focus:border-spotify/60 transition"
           />
         </div>
-        <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+        <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
           <span>
             Showing <strong className="text-white">{filteredPlaylists.length}</strong> of{' '}
             <strong className="text-white">{playlists.length}</strong> playlists
           </span>
           <span>
-            <strong className="text-emerald-400">{totalFilteredSongs.toLocaleString()}</strong> total songs available
+            <strong className="text-emerald-400">{totalFilteredSongs.toLocaleString()}</strong> songs
           </span>
         </div>
       </div>
 
       {/* Error state */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-950/40 border border-red-500/30 text-red-300 text-sm flex items-center justify-between">
+        <div className="p-3 rounded-2xl bg-red-950/40 border border-red-500/30 text-red-300 text-xs flex items-center justify-between">
           <span>{error}</span>
           <button
             onClick={fetchPlaylists}
-            className="px-3 py-1 bg-red-900/50 hover:bg-red-800/50 rounded-lg text-xs font-semibold cursor-pointer"
+            className="px-3 py-1 bg-red-900/50 hover:bg-red-800/50 rounded-full text-xs font-semibold cursor-pointer"
           >
             Retry
           </button>
@@ -288,28 +287,28 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
 
       {/* Playlist Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="rounded-2xl bg-slate-900/40 border border-slate-800/60 p-4 space-y-3 animate-pulse"
+              className="rounded-[22px] bg-slate-900/40 border border-slate-800/60 p-3 space-y-2 animate-pulse"
             >
-              <div className="w-full aspect-video rounded-xl bg-slate-800" />
-              <div className="h-5 bg-slate-800 rounded w-3/4" />
-              <div className="h-4 bg-slate-800 rounded w-1/2" />
+              <div className="w-full aspect-[16/10] rounded-xl bg-slate-800" />
+              <div className="h-4 bg-slate-800 rounded w-3/4" />
+              <div className="h-3 bg-slate-800 rounded w-1/2" />
             </div>
           ))}
         </div>
       ) : filteredPlaylists.length === 0 ? (
-        <div className="text-center py-16 p-8 rounded-2xl border border-dashed border-slate-800 bg-slate-900/20">
-          <Music className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-white font-semibold">No playlists found</p>
-          <p className="text-xs text-slate-400 mt-1">
+        <div className="text-center py-10 p-6 rounded-[24px] border border-dashed border-slate-800 bg-slate-900/20">
+          <Music className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+          <p className="text-white font-semibold text-xs">No playlists found</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">
             Try importing via link above or refresh your library.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredPlaylists.map((pl) => {
             const isSelected = selectedPlaylist?.id === pl.id;
             const isLikedMusic =
@@ -322,19 +321,19 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
               <div
                 key={pl.id}
                 onClick={() => handleSelect(pl)}
-                className={`group relative rounded-2xl overflow-hidden glass-panel p-4 cursor-pointer transition-all duration-200 border ${
+                className={`group relative rounded-[22px] overflow-hidden ios-bubble-card p-3 cursor-pointer transition-all duration-200 border ${
                   isSelected
-                    ? 'border-spotify bg-spotify/5 ring-2 ring-spotify/40 shadow-lg shadow-emerald-950/40 -translate-y-1'
+                    ? 'border-spotify bg-spotify/10 ring-2 ring-spotify/40 shadow-lg shadow-emerald-950/40 -translate-y-0.5'
                     : isLikedMusic
-                    ? 'border-pink-500/30 bg-pink-950/10 hover:border-pink-500/60 hover:-translate-y-0.5'
-                    : 'border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/50 hover:-translate-y-0.5'
+                    ? 'border-pink-500/30 bg-pink-950/10 hover:border-pink-500/60'
+                    : 'border-white/[0.08] hover:border-white/20'
                 }`}
               >
                 {/* Thumbnail */}
-                <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 mb-3.5 flex items-center justify-center">
+                <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-900 mb-2.5 flex items-center justify-center">
                   {isLikedMusic ? (
                     <div className="w-full h-full bg-gradient-to-tr from-pink-600 to-purple-600 flex items-center justify-center">
-                      <Heart className="w-12 h-12 text-white fill-current animate-pulse" />
+                      <Heart className="w-8 h-8 text-white fill-current animate-pulse" />
                     </div>
                   ) : (
                     <img
@@ -343,11 +342,11 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
                   {/* Item count tag */}
-                  <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 border border-white/10">
-                    <Music className="w-3.5 h-3.5 text-spotify" />
+                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md text-white text-[10px] font-semibold flex items-center gap-1 border border-white/10">
+                    <Music className="w-3 h-3 text-spotify" />
                     <span>
                       {isLikedMusic
                         ? 'Auto Library'
@@ -357,22 +356,20 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                 </div>
 
                 {/* Info */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-bold text-sm text-white line-clamp-1 group-hover:text-spotify transition">
-                      {pl.title}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-slate-400 line-clamp-1">
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-xs sm:text-sm text-white line-clamp-1 group-hover:text-spotify transition">
+                    {pl.title}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 line-clamp-1">
                     {pl.ownerTitle || pl.channelTitle || 'Curated Playlist'}
                   </p>
                 </div>
 
                 {/* Selection Indicator */}
                 {isSelected && (
-                  <div className="mt-3.5 pt-3 border-t border-spotify/20 text-spotify flex items-center justify-between text-xs font-semibold">
+                  <div className="mt-2.5 pt-2 border-t border-spotify/20 text-spotify flex items-center justify-between text-[11px] font-semibold">
                     <span>Selected for Transfer</span>
-                    <span className="w-2 h-2 rounded-full bg-spotify animate-ping" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-spotify animate-ping" />
                   </div>
                 )}
               </div>
@@ -383,15 +380,15 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
 
       {/* Playlist Customization Box */}
       {selectedPlaylist && (
-        <div className="p-6 rounded-2xl glass-panel border border-slate-800 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            <Edit3 className="w-4 h-4 text-spotify" />
+        <div className="p-4 sm:p-5 rounded-[24px] ios-bubble-card space-y-3">
+          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+            <Edit3 className="w-3.5 h-3.5 text-spotify" />
             <span>Target {targetName} Playlist Settings</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
             <div>
-              <label className="block text-xs text-slate-300 font-medium mb-1.5">
+              <label className="block text-xs text-slate-300 font-medium mb-1">
                 {targetName} Playlist Name
               </label>
               <input
@@ -399,13 +396,13 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 placeholder={`Playlist name on ${targetName}`}
-                className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-spotify focus:ring-1 focus:ring-spotify"
+                className="w-full px-3.5 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-spotify focus:ring-1 focus:ring-spotify"
               />
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs text-slate-400 flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-slate-900/60 border border-white/10 text-xs text-slate-400 flex items-center gap-2.5">
               <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${sourceConfig.bgColor} border ${sourceConfig.borderColor} ${sourceConfig.color}`}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${sourceConfig.bgColor} border ${sourceConfig.borderColor} ${sourceConfig.color}`}
               >
                 {sourcePlatform === 'youtube'
                   ? 'YT'
@@ -416,8 +413,8 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                   : 'JS'}
               </div>
               <div className="overflow-hidden">
-                <p className="text-white font-semibold truncate">{selectedPlaylist.title}</p>
-                <p className="truncate text-[11px]">
+                <p className="text-white font-semibold truncate text-xs">{selectedPlaylist.title}</p>
+                <p className="truncate text-[10px]">
                   {selectedPlaylist.itemCount > 0 ? `${selectedPlaylist.itemCount} items • ` : ''}
                   {sourceName} ➔ {targetName}
                 </p>
@@ -428,13 +425,13 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       )}
 
       {/* Bottom Actions */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-800/80">
+      <div className="flex items-center justify-between pt-2 border-t border-white/[0.08]">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition border border-slate-800 cursor-pointer"
+          className="ios-btn flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-white/10 cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Route Selection</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
         </button>
 
         <button
@@ -444,14 +441,14 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
             }
           }}
           disabled={!selectedPlaylist || isLoading}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+          className={`ios-btn flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-extrabold text-xs sm:text-sm transition-all ${
             selectedPlaylist
-              ? 'bg-gradient-to-r from-emerald-500 to-spotify hover:from-emerald-400 hover:to-spotify-accent text-black shadow-lg shadow-emerald-950/50 cursor-pointer scale-100 hover:scale-[1.02]'
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black shadow-lg shadow-emerald-950/50 cursor-pointer'
               : 'bg-slate-800 text-slate-500 cursor-not-allowed'
           }`}
         >
           <span>Start Real-time Migration</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

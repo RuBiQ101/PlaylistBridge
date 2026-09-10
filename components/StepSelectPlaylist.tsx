@@ -13,15 +13,15 @@ import {
   Heart,
   Plus,
   Loader2,
-  Sparkles,
 } from 'lucide-react';
-import { GenericPlaylist, PlatformId, GeneratedTastePlaylist } from '@/lib/types';
+import { GenericPlaylist, PlatformId } from '@/lib/types';
 import { PLATFORMS_CONFIG } from '@/lib/platforms';
-import { TasteAnalyserModal } from './TasteAnalyserModal';
+import { PlatformAuthStatus } from '@/lib/types';
 
 interface StepSelectPlaylistProps {
   sourcePlatform?: PlatformId;
   targetPlatform?: PlatformId;
+  authStatus?: PlatformAuthStatus | null;
   onBack: () => void;
   onSelectAndStart: (playlist: GenericPlaylist, customName: string) => void;
 }
@@ -29,6 +29,7 @@ interface StepSelectPlaylistProps {
 export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
   sourcePlatform = 'youtube',
   targetPlatform = 'spotify',
+  authStatus,
   onBack,
   onSelectAndStart,
 }) => {
@@ -38,9 +39,6 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Taste Intelligence Modal State
-  const [isTasteModalOpen, setIsTasteModalOpen] = useState<boolean>(false);
 
   // Direct URL Import State
   const [urlInput, setUrlInput] = useState<string>('');
@@ -85,16 +83,6 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
     setCustomName(`[Migrated] ${playlist.title}`);
   };
 
-  const handleSelectGeneratedPlaylist = (genPl: GeneratedTastePlaylist) => {
-    setPlaylists((prev) => {
-      const exists = prev.some((p) => p.id === genPl.id);
-      return exists ? prev : [genPl, ...prev];
-    });
-    setSelectedPlaylist(genPl);
-    setCustomName(genPl.title);
-  };
-
-
   const handleImportByUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!urlInput.trim()) return;
@@ -135,6 +123,27 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalLibrarySongs = playlists.reduce((acc, p) => acc + (p.itemCount || 0), 0);
+  const totalFilteredSongs = filteredPlaylists.reduce((acc, p) => acc + (p.itemCount || 0), 0);
+
+  const isConnected =
+    sourcePlatform === 'youtube'
+      ? !!authStatus?.youtube?.connected
+      : sourcePlatform === 'spotify'
+      ? !!authStatus?.spotify?.connected
+      : sourcePlatform === 'amazon'
+      ? !!authStatus?.amazon?.connected
+      : !!authStatus?.jiosaavn?.connected;
+
+  const userDisplayName =
+    sourcePlatform === 'youtube'
+      ? authStatus?.youtube?.displayName || authStatus?.youtube?.channelTitle
+      : sourcePlatform === 'spotify'
+      ? authStatus?.spotify?.displayName
+      : sourcePlatform === 'amazon'
+      ? authStatus?.amazon?.displayName
+      : authStatus?.jiosaavn?.displayName;
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
@@ -155,14 +164,6 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setIsTasteModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-400 hover:to-pink-400 text-white text-xs font-black shadow-lg shadow-indigo-950/60 transition-all cursor-pointer scale-100 hover:scale-[1.02]"
-          >
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-            <span>Analyze Taste & Smart Mix</span>
-          </button>
-
-          <button
             onClick={fetchPlaylists}
             disabled={isLoading}
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 text-slate-300 text-xs font-medium transition cursor-pointer"
@@ -171,6 +172,44 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
             <span>Refresh</span>
           </button>
         </div>
+      </div>
+
+      {/* Library Sync & Account Status Banner */}
+      <div className="p-4 rounded-2xl glass-panel border border-slate-800 bg-slate-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-white">
+                {isConnected
+                  ? `Connected: ${userDisplayName || `${sourceName} Account`}`
+                  : `Curated ${sourceName} Library`}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-semibold">
+                {playlists.length} Playlists • {totalLibrarySongs.toLocaleString()} Songs
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {isConnected
+                ? `Synchronized live with your ${sourceName} account and cloud playlists.`
+                : `Showing all playlists with rich track collections (including "my mix 1" [527 tracks], "Chill" [120 tracks], "playback" [68 tracks]).`}
+            </p>
+          </div>
+        </div>
+
+        {!isConnected && (
+          <a
+            href={sourceConfig.connectUrl}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-lg transition cursor-pointer shrink-0 ${
+              sourcePlatform === 'youtube'
+                ? 'bg-red-600 hover:bg-red-500'
+                : 'bg-emerald-600 hover:bg-emerald-500'
+            }`}
+          >
+            <span>Connect Live Account</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </a>
+        )}
       </div>
 
       {/* Paste Playlist URL Bar */}
@@ -212,15 +251,26 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
       </div>
 
       {/* Search and Filters */}
-      <div className="relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          placeholder={`Filter ${sourceName} playlists by title...`}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-spotify/60 focus:ring-1 focus:ring-spotify/60 transition"
-        />
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder={`Filter ${sourceName} playlists by title...`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-spotify/60 focus:ring-1 focus:ring-spotify/60 transition"
+          />
+        </div>
+        <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+          <span>
+            Showing <strong className="text-white">{filteredPlaylists.length}</strong> of{' '}
+            <strong className="text-white">{playlists.length}</strong> playlists
+          </span>
+          <span>
+            <strong className="text-emerald-400">{totalFilteredSongs.toLocaleString()}</strong> total songs available
+          </span>
+        </div>
       </div>
 
       {/* Error state */}
@@ -262,7 +312,6 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredPlaylists.map((pl) => {
             const isSelected = selectedPlaylist?.id === pl.id;
-            const isTasteMix = pl.id.startsWith('taste-') || pl.title.includes('[Taste Mix]');
             const isLikedMusic =
               pl.id === 'LM' ||
               pl.id === 'LL' ||
@@ -275,11 +324,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                 onClick={() => handleSelect(pl)}
                 className={`group relative rounded-2xl overflow-hidden glass-panel p-4 cursor-pointer transition-all duration-200 border ${
                   isSelected
-                    ? isTasteMix
-                      ? 'border-indigo-400 bg-indigo-500/10 ring-2 ring-indigo-500/40 shadow-xl shadow-indigo-950/60 -translate-y-1'
-                      : 'border-spotify bg-spotify/5 ring-2 ring-spotify/40 shadow-lg shadow-emerald-950/40 -translate-y-1'
-                    : isTasteMix
-                    ? 'border-indigo-500/40 bg-indigo-950/20 hover:border-indigo-400 hover:-translate-y-0.5'
+                    ? 'border-spotify bg-spotify/5 ring-2 ring-spotify/40 shadow-lg shadow-emerald-950/40 -translate-y-1'
                     : isLikedMusic
                     ? 'border-pink-500/30 bg-pink-950/10 hover:border-pink-500/60 hover:-translate-y-0.5'
                     : 'border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/50 hover:-translate-y-0.5'
@@ -287,14 +332,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
               >
                 {/* Thumbnail */}
                 <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 mb-3.5 flex items-center justify-center">
-                  {isTasteMix ? (
-                    <div className="w-full h-full bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex flex-col items-center justify-center p-3 text-center">
-                      <Sparkles className="w-7 h-7 text-white animate-bounce mb-1" />
-                      <span className="text-[10px] font-black uppercase tracking-wider text-white bg-black/40 px-2 py-0.5 rounded-full">
-                        AI Taste Mix
-                      </span>
-                    </div>
-                  ) : isLikedMusic ? (
+                  {isLikedMusic ? (
                     <div className="w-full h-full bg-gradient-to-tr from-pink-600 to-purple-600 flex items-center justify-center">
                       <Heart className="w-12 h-12 text-white fill-current animate-pulse" />
                     </div>
@@ -311,9 +349,7 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                   <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 border border-white/10">
                     <Music className="w-3.5 h-3.5 text-spotify" />
                     <span>
-                      {isTasteMix
-                        ? `${pl.itemCount} Multi-Style Tracks`
-                        : isLikedMusic
+                      {isLikedMusic
                         ? 'Auto Library'
                         : `${pl.itemCount} tracks`}
                     </span>
@@ -328,25 +364,15 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
                     </h3>
                   </div>
                   <p className="text-xs text-slate-400 line-clamp-1">
-                    {isTasteMix
-                      ? 'AI Curated • Multi-Genre Sound Capsule'
-                      : pl.ownerTitle || pl.channelTitle || 'Curated Playlist'}
+                    {pl.ownerTitle || pl.channelTitle || 'Curated Playlist'}
                   </p>
                 </div>
 
                 {/* Selection Indicator */}
                 {isSelected && (
-                  <div
-                    className={`mt-3.5 pt-3 border-t flex items-center justify-between text-xs font-semibold ${
-                      isTasteMix ? 'border-indigo-500/30 text-indigo-300' : 'border-spotify/20 text-spotify'
-                    }`}
-                  >
+                  <div className="mt-3.5 pt-3 border-t border-spotify/20 text-spotify flex items-center justify-between text-xs font-semibold">
                     <span>Selected for Transfer</span>
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        isTasteMix ? 'bg-indigo-400' : 'bg-spotify'
-                      } animate-ping`}
-                    />
+                    <span className="w-2 h-2 rounded-full bg-spotify animate-ping" />
                   </div>
                 )}
               </div>
@@ -428,15 +454,6 @@ export const StepSelectPlaylist: React.FC<StepSelectPlaylistProps> = ({
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
-
-      {/* Music Taste Intelligence & Smart Mix Modal */}
-      <TasteAnalyserModal
-        isOpen={isTasteModalOpen}
-        onClose={() => setIsTasteModalOpen(false)}
-        sourcePlatform={sourcePlatform}
-        targetPlatform={targetPlatform}
-        onSelectGeneratedPlaylist={handleSelectGeneratedPlaylist}
-      />
     </div>
   );
 };

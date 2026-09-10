@@ -236,6 +236,7 @@ export default function Home() {
           <StepSelectPlaylist
             sourcePlatform={sourcePlatform}
             targetPlatform={targetPlatform}
+            authStatus={authStatus}
             onBack={() => setViewMode('platforms')}
             onSelectAndStart={handleStartTransfer}
           />

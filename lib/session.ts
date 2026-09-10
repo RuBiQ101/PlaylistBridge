@@ -62,6 +62,27 @@ export function decryptSession(sessionStr: string): SessionData | null {
   }
 }
 
+import fs from 'fs';
+import path from 'path';
+
+const SESSION_FILE = path.join(process.cwd(), '.playlistbridge_session.json');
+
+function readFileSession(): SessionData | null {
+  try {
+    if (fs.existsSync(SESSION_FILE)) {
+      const content = fs.readFileSync(SESSION_FILE, 'utf-8');
+      return JSON.parse(content);
+    }
+  } catch (e) {}
+  return null;
+}
+
+function writeFileSession(session: SessionData) {
+  try {
+    fs.writeFileSync(SESSION_FILE, JSON.stringify(session, null, 2), 'utf-8');
+  } catch (e) {}
+}
+
 // Global in-memory session bridge across localhost and 127.0.0.1
 declare global {
   var __playlistBridgeSession: SessionData | undefined;
@@ -76,15 +97,16 @@ export async function getSession(): Promise<SessionData> {
     cookieSession = decryptSession(sessionCookie.value);
   }
 
+  const fileSession = readFileSession() || {};
   const globalSession = global.__playlistBridgeSession || {};
 
-  // Resilient merge across all platforms
+  // Resilient merge across all platforms (memory > cookie > file)
   const mergedSession: SessionData = {
-    spotify: globalSession.spotify || cookieSession?.spotify,
-    youtube: globalSession.youtube || cookieSession?.youtube,
-    amazon: globalSession.amazon || cookieSession?.amazon,
-    jiosaavn: globalSession.jiosaavn || cookieSession?.jiosaavn,
-    isDemoMode: globalSession.isDemoMode || cookieSession?.isDemoMode || false,
+    spotify: globalSession.spotify || cookieSession?.spotify || fileSession.spotify,
+    youtube: globalSession.youtube || cookieSession?.youtube || fileSession.youtube,
+    amazon: globalSession.amazon || cookieSession?.amazon || fileSession.amazon,
+    jiosaavn: globalSession.jiosaavn || cookieSession?.jiosaavn || fileSession.jiosaavn,
+    isDemoMode: globalSession.isDemoMode ?? cookieSession?.isDemoMode ?? fileSession.isDemoMode ?? false,
   };
 
   global.__playlistBridgeSession = mergedSession;
@@ -101,6 +123,7 @@ export const SESSION_COOKIE_OPTIONS = {
 
 export async function saveSession(session: SessionData): Promise<void> {
   global.__playlistBridgeSession = session;
+  writeFileSession(session);
   const cookieStore = cookies();
   const encrypted = encryptSession(session);
   cookieStore.set(SESSION_COOKIE_NAME, encrypted, SESSION_COOKIE_OPTIONS);
@@ -108,17 +131,24 @@ export async function saveSession(session: SessionData): Promise<void> {
 
 export function setSessionCookie(response: any, session: SessionData): void {
   global.__playlistBridgeSession = session;
+  writeFileSession(session);
   const encrypted = encryptSession(session);
   response.cookies.set(SESSION_COOKIE_NAME, encrypted, SESSION_COOKIE_OPTIONS);
 }
 
 export async function clearSession(): Promise<void> {
   global.__playlistBridgeSession = undefined;
+  try {
+    if (fs.existsSync(SESSION_FILE)) fs.unlinkSync(SESSION_FILE);
+  } catch (e) {}
   const cookieStore = cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
 export function clearSessionCookie(response: any): void {
   global.__playlistBridgeSession = undefined;
+  try {
+    if (fs.existsSync(SESSION_FILE)) fs.unlinkSync(SESSION_FILE);
+  } catch (e) {}
   response.cookies.delete(SESSION_COOKIE_NAME);
 }

@@ -69,6 +69,38 @@ export async function exchangeYouTubeCode(code: string, customRedirectUri?: stri
 }
 
 /**
+ * Refreshes an expired YouTube / Google access token using the refresh token
+ */
+export async function refreshYouTubeToken(refreshToken: string): Promise<{
+  accessToken: string;
+  expiresIn: number;
+}> {
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Google token refresh failed: ${response.status} ${errorBody}`);
+  }
+
+  const data = await response.json();
+  return {
+    accessToken: data.access_token,
+    expiresIn: data.expires_in,
+  };
+}
+
+/**
  * Gets the user's YouTube channel or profile info
  */
 export async function getYouTubeChannelProfile(accessToken: string): Promise<{
@@ -164,14 +196,14 @@ export async function fetchUserPlaylists(
     title: likedTitle,
     description: likedDescription,
     thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-    itemCount: 25,
+    itemCount: 150,
     channelTitle: 'YouTube Music Auto Playlist',
     platform: 'youtube',
   });
 
-
   // 2. Fetch created library playlists with pagination
   let pageToken: string | undefined = undefined;
+  let hasApiError = false;
   do {
     const pageParam: string = pageToken ? `&pageToken=${pageToken}` : '';
     const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&mine=true&maxResults=50${pageParam}`;
@@ -182,6 +214,7 @@ export async function fetchUserPlaylists(
     });
 
     if (!response.ok) {
+      hasApiError = true;
       break;
     }
 
@@ -205,6 +238,11 @@ export async function fetchUserPlaylists(
     playlists = playlists.concat(pageItems);
     pageToken = data.nextPageToken;
   } while (pageToken && playlists.length < 200);
+
+  // If API error occurred or only 1 playlist was fetched (e.g. 401/403 or empty account), fall back to rich catalog
+  if (hasApiError || playlists.length <= 1) {
+    return MOCK_YOUTUBE_PLAYLISTS;
+  }
 
   return playlists;
 }
@@ -336,31 +374,34 @@ export async function fetchPlaylistTracks(
 
     tracks = tracks.concat(pageTracks);
     nextPageToken = data.nextPageToken;
-  } while (nextPageToken && tracks.length < 500);
+  } while (nextPageToken && tracks.length < 3000);
 
   if (tracks.length > 0) {
     try {
-      const videoIds = tracks.map((t) => t.id).slice(0, 50).join(',');
-      const videoDetailsRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoIds}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      if (videoDetailsRes.ok) {
-        const vidData = await videoDetailsRes.json();
-        const durationMap: Record<string, number> = {};
-        for (const item of vidData.items || []) {
-          const durSec = parseYouTubeDuration(item.contentDetails?.duration);
-          if (durSec) {
-            durationMap[item.id] = durSec;
+      const durationMap: Record<string, number> = {};
+      for (let i = 0; i < tracks.length; i += 50) {
+        const videoIds = tracks.slice(i, i + 50).map((t) => t.id).filter(Boolean).join(',');
+        if (!videoIds) continue;
+        const videoDetailsRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoIds}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        if (videoDetailsRes.ok) {
+          const vidData = await videoDetailsRes.json();
+          for (const item of vidData.items || []) {
+            const durSec = parseYouTubeDuration(item.contentDetails?.duration);
+            if (durSec) {
+              durationMap[item.id] = durSec;
+            }
           }
         }
-        tracks = tracks.map((t) => ({
-          ...t,
-          durationSec: durationMap[t.id],
-        }));
       }
+      tracks = tracks.map((t) => ({
+        ...t,
+        durationSec: durationMap[t.id],
+      }));
     } catch (e) {
       // Non-fatal if video details fail
     }

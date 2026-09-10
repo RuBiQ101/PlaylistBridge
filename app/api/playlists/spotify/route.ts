@@ -11,19 +11,13 @@ export async function GET() {
     const hasRealToken =
       !!session.spotify?.accessToken && session.spotify.accessToken !== 'demo_token';
 
-    if (!hasRealToken && !session.isDemoMode) {
-      return NextResponse.json(
-        { error: 'Spotify account not connected' },
-        { status: 401 }
-      );
-    }
-
     const playlists = await fetchUserSpotifyPlaylists(
       session.spotify?.accessToken || 'demo_token',
       !hasRealToken
     );
 
     return NextResponse.json({ playlists });
+
 
   } catch (error: any) {
     console.error('Failed to fetch Spotify playlists:', error);

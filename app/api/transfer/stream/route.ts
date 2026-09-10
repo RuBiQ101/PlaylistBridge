@@ -10,7 +10,6 @@ import {
 } from '@/lib/platforms';
 import { cleanTrackMetadata } from '@/lib/normalization';
 import { refreshSpotifyAccessToken } from '@/lib/spotify';
-import { getCachedTastePlaylist } from '@/lib/analyser';
 import {
   MigrationProgressEvent,
   PlatformId,
@@ -120,16 +119,7 @@ export async function GET(request: NextRequest) {
       let sourcePlaylistTitle = customName || `Imported ${sourceConfig.name} Playlist`;
       let tracks: GenericTrack[] = [];
 
-      if (playlistId.startsWith('taste-')) {
-        const cached = getCachedTastePlaylist(playlistId);
-        if (cached) {
-          sourcePlaylistTitle = cached.title || sourcePlaylistTitle;
-          tracks = cached.tracks || [];
-        }
-      }
-
-      if (tracks.length === 0) {
-        const allPlaylists = await fetchPlatformPlaylists(
+      const allPlaylists = await fetchPlatformPlaylists(
           sourcePlatform,
           sourceAccessToken,
           isDemo

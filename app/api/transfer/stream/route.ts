@@ -10,6 +10,7 @@ import {
 } from '@/lib/platforms';
 import { cleanTrackMetadata } from '@/lib/normalization';
 import { refreshSpotifyAccessToken } from '@/lib/spotify';
+import { getCachedTastePlaylist } from '@/lib/analyser';
 import {
   MigrationProgressEvent,
   PlatformId,
@@ -18,6 +19,7 @@ import {
 } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -115,21 +117,36 @@ export async function GET(request: NextRequest) {
         logLevel: 'info',
       });
 
-      const allPlaylists = await fetchPlatformPlaylists(
-        sourcePlatform,
-        sourceAccessToken,
-        isDemo
-      );
-      const matchedPl = allPlaylists.find((p) => p.id === playlistId);
-      const sourcePlaylistTitle =
-        matchedPl?.title || customName || `Imported ${sourceConfig.name} Playlist`;
+      let sourcePlaylistTitle = customName || `Imported ${sourceConfig.name} Playlist`;
+      let tracks: GenericTrack[] = [];
 
-      const tracks: GenericTrack[] = await fetchPlatformPlaylistTracks(
-        sourcePlatform,
-        sourceAccessToken,
-        playlistId,
-        isDemo
-      );
+      if (playlistId.startsWith('taste-')) {
+        const cached = getCachedTastePlaylist(playlistId);
+        if (cached) {
+          sourcePlaylistTitle = cached.title || sourcePlaylistTitle;
+          tracks = cached.tracks || [];
+        }
+      }
+
+      if (tracks.length === 0) {
+        const allPlaylists = await fetchPlatformPlaylists(
+          sourcePlatform,
+          sourceAccessToken,
+          isDemo
+        );
+        const matchedPl = allPlaylists.find((p) => p.id === playlistId);
+        if (matchedPl?.title) {
+          sourcePlaylistTitle = matchedPl.title;
+        }
+
+        tracks = await fetchPlatformPlaylistTracks(
+          sourcePlatform,
+          sourceAccessToken,
+          playlistId,
+          isDemo
+        );
+      }
+
 
       const totalTracks = tracks.length;
       let matchedCount = 0;

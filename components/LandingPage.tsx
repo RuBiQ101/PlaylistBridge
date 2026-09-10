@@ -9,13 +9,25 @@ import {
   Layers,
 } from 'lucide-react';
 
+import { PlatformId } from '@/lib/types';
+
 interface LandingPageProps {
   onGetStarted: () => void;
+  onSelectPlatform?: (platform: PlatformId) => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onGetStarted,
+  onSelectPlatform,
 }) => {
+  const handlePlatformClick = (p: PlatformId) => {
+    if (onSelectPlatform) {
+      onSelectPlatform(p);
+    } else {
+      onGetStarted();
+    }
+  };
+
   return (
     <div className="space-y-16 sm:space-y-24 py-6 sm:py-12">
       {/* ================= Hero Section ================= */}
@@ -35,8 +47,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </span>
           </h1>
           <p className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Seamlessly migrate your favorite music, playlists, and recap mixes from YouTube Music
-            to Spotify with real-time audio duration matching and zero quality loss.
+            Seamlessly migrate your favorite music, playlists, and recap mixes between YouTube Music,
+            Spotify, Amazon Music, and JioSaavn with real-time audio duration matching and zero quality loss.
           </p>
         </div>
 
@@ -53,19 +65,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         {/* Supported Platforms Pills */}
         <div className="pt-8 border-t border-slate-800/60 flex flex-wrap items-center justify-center gap-2.5 text-xs text-slate-400">
-          <span className="text-slate-500 font-medium">Platforms:</span>
-          <span className="px-3 py-1 rounded-full bg-red-950/40 border border-red-500/30 text-red-400 font-semibold flex items-center gap-1.5 shadow-sm">
+          <span className="text-slate-500 font-medium">Select Platform:</span>
+          <button
+            onClick={() => handlePlatformClick('youtube')}
+            className="px-3.5 py-1.5 rounded-full bg-red-950/40 hover:bg-red-900/50 border border-red-500/30 text-red-400 font-semibold flex items-center gap-1.5 shadow-sm transition hover:scale-105 cursor-pointer"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> YouTube Music
-          </span>
-          <span className="px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-semibold flex items-center gap-1.5 shadow-sm">
+          </button>
+          <button
+            onClick={() => handlePlatformClick('spotify')}
+            className="px-3.5 py-1.5 rounded-full bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 text-emerald-400 font-semibold flex items-center gap-1.5 shadow-sm transition hover:scale-105 cursor-pointer"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-spotify" /> Spotify
-          </span>
-          <span className="px-3 py-1 rounded-full bg-cyan-950/30 border border-cyan-500/30 text-cyan-400 font-medium flex items-center gap-1.5">
+          </button>
+          <button
+            onClick={() => handlePlatformClick('amazon')}
+            className="px-3.5 py-1.5 rounded-full bg-cyan-950/30 hover:bg-cyan-900/50 border border-cyan-500/30 text-cyan-400 font-medium flex items-center gap-1.5 transition hover:scale-105 cursor-pointer"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" /> Amazon Music
-          </span>
-          <span className="px-3 py-1 rounded-full bg-teal-950/30 border border-teal-500/30 text-teal-400 font-medium flex items-center gap-1.5">
+          </button>
+          <button
+            onClick={() => handlePlatformClick('jiosaavn')}
+            className="px-3.5 py-1.5 rounded-full bg-teal-950/30 hover:bg-teal-900/50 border border-teal-500/30 text-teal-400 font-medium flex items-center gap-1.5 transition hover:scale-105 cursor-pointer"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400" /> JioSaavn / Jio Music
-          </span>
+          </button>
         </div>
       </section>
 

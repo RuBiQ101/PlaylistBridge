@@ -88,13 +88,13 @@ export const PLATFORMS_CONFIG: Record<PlatformId, PlatformConfig> = {
   jiosaavn: {
     id: 'jiosaavn',
     name: 'JioSaavn (Jio Music)',
-    tagline: 'JioTunes & Saavn Library',
+    tagline: 'Embedded Login · JioTunes & Saavn Library',
     color: 'text-teal-400',
     bgColor: 'bg-teal-950/30',
     borderColor: 'border-teal-500/40',
-    badge: 'Active & Ready',
+    badge: 'Direct Login',
     available: true,
-    defaultScopes: 'jiosaavn:playlist:read-write',
+    defaultScopes: 'playlist:read-write, music:search',
     connectUrl: '/api/auth/jiosaavn',
   },
 };

@@ -161,3 +161,65 @@ export interface MigrationSummary {
   durationMs: number;
   tracks: TrackReconciliation[];
 }
+
+export interface ArtistTasteStat {
+  name: string;
+  count: number;
+  percentage: number;
+  primaryGenre: string;
+}
+
+export interface GenreTasteStat {
+  genre: string;
+  count: number;
+  percentage: number;
+  color: string;
+  badge: string;
+}
+
+export interface MoodDistribution {
+  upbeatParty: number;     // % high tempo / energetic
+  chillAmbient: number;    // % relaxing / ambient
+  soulfulMelodic: number;  // % melodic / emotional / acoustic
+  intenseFocus: number;    // % intense / dark / workout
+}
+
+export interface EraStat {
+  decade: string;
+  percentage: number;
+}
+
+export interface TasteAnalysisResult {
+  totalTracksScanned: number;
+  uniqueTracksCount: number;
+  uniqueArtistsCount: number;
+  topArtists: ArtistTasteStat[];
+  genreBreakdown: GenreTasteStat[];
+  topGenres: string[];
+  moodDistribution: MoodDistribution;
+  eraDistribution: EraStat[];
+  diversityScore: number; // 0 to 100
+  tasteTitle: string;     // e.g. "Eclectic Sonic Explorer"
+  summaryDescription: string;
+  scannedPlaylistsCount: number;
+}
+
+export type TastePreset = 'balanced' | 'high_energy' | 'chill' | 'eclectic';
+
+export interface TastePlaylistOptions {
+  preset: TastePreset;
+  trackCount: number;
+  customTitle?: string;
+}
+
+export interface TasteTrackItem extends GenericTrack {
+  styleTag: string;
+  vibeTag: string;
+}
+
+export interface GeneratedTastePlaylist extends GenericPlaylist {
+  tracks: TasteTrackItem[];
+  stylesCovered: string[];
+  presetUsed: TastePreset;
+}
+

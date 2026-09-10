@@ -17,6 +17,7 @@ import {
 import { PlatformAccountDetails, PlatformAuthStatus, PlatformId } from '@/lib/types';
 import { PLATFORMS_CONFIG } from '@/lib/platforms';
 import { ConnectServiceDialog } from '@/components/ConnectServiceDialog';
+import { JioSaavnLoginDialog } from '@/components/JioSaavnLoginDialog';
 
 interface PlatformSelectorProps {
   authStatus: PlatformAuthStatus | null;
@@ -58,6 +59,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   const [sourceId, setSourceId] = useState<PlatformId>(selectedSource);
   const [targetId, setTargetId] = useState<PlatformId>(selectedTarget);
   const [dialogPlatform, setDialogPlatform] = useState<PlatformId | null>(null);
+  const [showJioLogin, setShowJioLogin] = useState<boolean>(false);
 
   // Sync state if props change from parent
   useEffect(() => {
@@ -123,7 +125,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       bgColor: 'bg-teal-950/30',
       borderColor: 'border-teal-500/40',
       available: true,
-      badge: 'Active & Ready',
+      badge: 'Direct Login',
       iconSvg: (cls = 'w-6 h-6') => (
         <svg className={`${cls} fill-current text-teal-400`} viewBox="0 0 24 24">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
@@ -190,17 +192,18 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     const cfg = PLATFORMS_CONFIG[platformId];
     if (!cfg) return;
 
-    if (platformId === 'youtube' || platformId === 'spotify' || platformId === 'amazon') {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('playlistbridge_source', sourceId);
-        localStorage.setItem('playlistbridge_target', targetId);
-        window.location.href = cfg.connectUrl;
-      }
+    // JioSaavn uses embedded login (no public OAuth)
+    if (platformId === 'jiosaavn') {
+      setShowJioLogin(true);
       return;
     }
 
-    // Open connection dialog for JioSaavn
-    setDialogPlatform(platformId);
+    // YouTube, Spotify, Amazon use OAuth 2.0 redirect
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playlistbridge_source', sourceId);
+      localStorage.setItem('playlistbridge_target', targetId);
+      window.location.href = cfg.connectUrl;
+    }
   };
 
   const renderConnectionCard = (
@@ -288,8 +291,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
               </div>
 
               <div className="flex items-center gap-1">
-                {(platformId === 'amazon' ||
-                  platformId === 'jiosaavn') && (
+              {(platformId === 'amazon') && (
                   <button
                     onClick={() => setDialogPlatform(platformId)}
                     className="text-xs text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition cursor-pointer"
@@ -346,13 +348,23 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
 
   return (
     <div className="space-y-10 max-w-5xl mx-auto px-4 py-4">
-      {/* Account Login / Connect Dialog */}
+      {/* Account Login / Connect Dialog (Amazon) */}
       <ConnectServiceDialog
         platformId={dialogPlatform}
         authStatus={authStatus}
         isOpen={!!dialogPlatform}
         onClose={() => setDialogPlatform(null)}
         onConnected={() => {
+          onRefreshAuth?.();
+        }}
+      />
+
+      {/* JioSaavn Embedded Login Dialog */}
+      <JioSaavnLoginDialog
+        isOpen={showJioLogin}
+        authStatus={authStatus}
+        onClose={() => setShowJioLogin(false)}
+        onLoggedIn={() => {
           onRefreshAuth?.();
         }}
       />

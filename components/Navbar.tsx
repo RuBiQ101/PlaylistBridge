@@ -1,14 +1,21 @@
 'use client';
 
 import React from 'react';
+import { ArrowRight, Sparkles, Music2, Home as HomeIcon } from 'lucide-react';
 
 interface NavbarProps {
+  viewMode?: 'landing' | 'platforms' | 'playlists' | 'transfer' | 'summary';
   onGoHome: () => void;
+  onOpenTool?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onGoHome }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  viewMode = 'landing',
+  onGoHome,
+  onOpenTool,
+}) => {
   return (
-    <header className="w-full border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-xl sticky top-0 z-50">
+    <header className="w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo with Home Return */}
         <button
@@ -40,6 +47,43 @@ export const Navbar: React.FC<NavbarProps> = ({ onGoHome }) => {
             </p>
           </div>
         </button>
+
+        {/* Right Navigation & Quick Actions */}
+        <div className="flex items-center gap-3">
+          {viewMode !== 'landing' && (
+            <button
+              onClick={onGoHome}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-800 transition cursor-pointer"
+            >
+              <HomeIcon className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Home</span>
+            </button>
+          )}
+
+          {viewMode === 'landing' ? (
+            <button
+              onClick={onOpenTool || onGoHome}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs shadow-lg shadow-emerald-950/40 transition hover:scale-105 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Launch Tool</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-medium text-slate-300">
+                {viewMode === 'platforms'
+                  ? 'Step 1: Choose Platforms'
+                  : viewMode === 'playlists'
+                  ? 'Step 2: Select Playlist'
+                  : viewMode === 'transfer'
+                  ? 'Step 3: Transferring...'
+                  : 'Step 4: Summary'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

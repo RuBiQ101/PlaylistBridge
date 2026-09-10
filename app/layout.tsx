@@ -9,6 +9,9 @@ export const metadata: Metadata = {
     icon: '/logo.jpg',
     apple: '/logo.jpg',
   },
+  verification: {
+    google: 'google379cfa43ed246b4c',
+  },
 };
 
 export default function RootLayout({

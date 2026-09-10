@@ -8,7 +8,10 @@ export async function GET() {
   try {
     const session = await getSession();
 
-    if (!session.spotify?.accessToken && !session.isDemoMode) {
+    const hasRealToken =
+      !!session.spotify?.accessToken && session.spotify.accessToken !== 'demo_token';
+
+    if (!hasRealToken && !session.isDemoMode) {
       return NextResponse.json(
         { error: 'Spotify account not connected' },
         { status: 401 }
@@ -17,10 +20,11 @@ export async function GET() {
 
     const playlists = await fetchUserSpotifyPlaylists(
       session.spotify?.accessToken || 'demo_token',
-      session.isDemoMode
+      !hasRealToken
     );
 
     return NextResponse.json({ playlists });
+
   } catch (error: any) {
     console.error('Failed to fetch Spotify playlists:', error);
     return NextResponse.json(

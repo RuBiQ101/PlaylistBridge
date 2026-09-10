@@ -8,7 +8,10 @@ export async function GET() {
   try {
     const session = await getSession();
 
-    if (!session.youtube?.accessToken && !session.isDemoMode) {
+    const hasRealToken =
+      !!session.youtube?.accessToken && session.youtube.accessToken !== 'demo_token';
+
+    if (!hasRealToken && !session.isDemoMode) {
       return NextResponse.json(
         { error: 'YouTube account not connected' },
         { status: 401 }
@@ -17,10 +20,11 @@ export async function GET() {
 
     const playlists = await fetchUserPlaylists(
       session.youtube?.accessToken || 'demo_token',
-      session.isDemoMode
+      !hasRealToken
     );
 
     return NextResponse.json({ playlists });
+
   } catch (error: any) {
     console.error('Failed to fetch YouTube playlists:', error);
     return NextResponse.json(

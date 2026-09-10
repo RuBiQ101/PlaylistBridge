@@ -135,8 +135,6 @@ export async function GET(request: NextRequest) {
           playlistId,
           isDemo
         );
-      }
-
 
       const totalTracks = tracks.length;
       let matchedCount = 0;

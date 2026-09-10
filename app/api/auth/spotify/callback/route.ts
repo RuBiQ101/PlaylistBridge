@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   const rawState = searchParams.get('state');
   const returnOrigin = rawState ? decodeURIComponent(rawState) : request.nextUrl.origin;
-  const redirectHost = returnOrigin || request.nextUrl.origin;
+  const redirectHost = process.env.NEXT_PUBLIC_APP_URL || returnOrigin || request.nextUrl.origin || 'http://127.0.0.1:3000';
 
   if (error || !code) {
     return NextResponse.redirect(
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const redirectUri = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3000/api/auth/spotify/callback';
+    const redirectUri = process.env.SPOTIFY_REDIRECT_URI || `${redirectHost}/api/auth/spotify/callback`;
     const tokenData = await exchangeSpotifyCode(code, redirectUri);
     const profile = await getSpotifyUserProfile(tokenData.accessToken);
 

@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/?error=google_credentials_missing', request.nextUrl.origin));
   }
 
-  const redirectUri = `${request.nextUrl.origin}/api/auth/youtube/callback`;
+  const redirectHost =
+    process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || 'http://localhost:3000';
+  const redirectUri =
+    process.env.GOOGLE_REDIRECT_URI || `${redirectHost}/api/auth/youtube/callback`;
   const authUrl = getYouTubeAuthUrl(redirectUri);
   return NextResponse.redirect(authUrl);
 }

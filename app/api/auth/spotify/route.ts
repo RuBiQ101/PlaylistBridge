@@ -9,9 +9,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/?error=spotify_credentials_missing', request.nextUrl.origin));
   }
 
-  // Spotify requires the exact registered loopback URI: http://127.0.0.1:3000/api/auth/spotify/callback
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3000/api/auth/spotify/callback';
-  const state = encodeURIComponent(request.nextUrl.origin);
+  const redirectHost =
+    process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || 'http://127.0.0.1:3000';
+  const redirectUri =
+    process.env.SPOTIFY_REDIRECT_URI || `${redirectHost}/api/auth/spotify/callback`;
+  const state = encodeURIComponent(redirectHost);
   const authUrl = getSpotifyAuthUrl(redirectUri, state);
   return NextResponse.redirect(authUrl);
 }

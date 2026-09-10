@@ -67,6 +67,56 @@ npx tsx lib/test-normalization.ts
 
 ---
 
+---
+
+## 🌐 Deploying to Render with a Custom Domain
+
+PlaylistBridge is fully configured for 1-click deployment on **Render** as a Node.js Web Service with automatic SSL certificates.
+
+### Step 1: Deploy on Render
+1. Push your code to GitHub.
+2. Log in to [Render Dashboard](https://dashboard.render.com).
+3. Click **New +** ➔ **Blueprint** (or **Web Service**).
+4. Connect your `PlaylistBridge` repository.
+5. Render will automatically detect `render.yaml` and configure:
+   - **Environment**: Node
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Health Check Path**: `/api/auth/status`
+
+### Step 2: Attach Your Custom Domain
+1. In your Render Web Service dashboard, go to **Settings** ➔ **Custom Domains**.
+2. Click **Add Custom Domain** and enter your domain (e.g. `playlistbridge.com` or `app.yourdomain.com`).
+3. In your domain registrar (GoDaddy, Namecheap, Cloudflare, Google Domains, etc.), add the DNS records provided by Render:
+   - For a subdomain (e.g., `app.yourdomain.com`): Add a **CNAME** pointing to your Render URL (`playlistbridge.onrender.com`).
+   - For apex domain (e.g., `yourdomain.com`): Add an **A record** pointing to Render's IP address (`216.24.57.1`).
+4. Render will automatically provision a free Let's Encrypt **SSL Certificate** (HTTPS).
+
+### Step 3: Set Environment Variables on Render
+Under the **Environment** tab on Render, configure:
+```env
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+SPOTIFY_CLIENT_ID=your_spotify_client_id
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+SPOTIFY_REDIRECT_URI=https://yourdomain.com/api/auth/spotify/callback
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=https://yourdomain.com/api/auth/youtube/callback
+
+AMAZON_CLIENT_ID=your_amazon_client_id
+AMAZON_CLIENT_SECRET=your_amazon_client_secret
+AMAZON_REDIRECT_URI=https://yourdomain.com/api/auth/amazon/callback
+```
+
+### Step 4: Add Redirect URIs in Developer Consoles
+Add your production URLs to the respective developer consoles:
+- **Spotify Developer Dashboard**: Add `https://yourdomain.com/api/auth/spotify/callback` to *Redirect URIs*.
+- **Google Cloud Console**: Add `https://yourdomain.com/api/auth/youtube/callback` to *Authorized redirect URIs*.
+- **Amazon Developer Console**: Add `https://yourdomain.com/api/auth/amazon/callback` to *Allowed Return URLs*.
+
+---
+
 ## 📄 License & Copyright
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for more details.

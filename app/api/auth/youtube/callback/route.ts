@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const error = searchParams.get('error');
 
-  const redirectHost = request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const redirectHost = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || 'http://localhost:3000';
 
   if (error || !code) {
     return NextResponse.redirect(
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const redirectUri = `${redirectHost}/api/auth/youtube/callback`;
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${redirectHost}/api/auth/youtube/callback`;
     const tokenData = await exchangeYouTubeCode(code, redirectUri);
     const channelProfile = await getYouTubeChannelProfile(tokenData.accessToken);
 

@@ -370,16 +370,21 @@ export async function searchSpotifyTrack(
     return searchMockSpotify(cleaned.cleanedTitle, cleaned.cleanedArtist, cleaned.rawDurationSec);
   }
 
-  const { strictQuery, fallbackQuery, broadQuery } = buildSpotifySearchQueries(cleaned);
+  const { strictQuery, fallbackQuery, broadQuery, alternateQueries } = buildSpotifySearchQueries(cleaned);
 
   const querySpotify = async (q: string) => {
-    const url = `https://api.spotify.com/v1/search?type=track&limit=5&q=${encodeURIComponent(q)}`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.tracks?.items || [];
+    if (!q || q.trim().length < 2) return [];
+    try {
+      const url = `https://api.spotify.com/v1/search?type=track&limit=5&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.tracks?.items || [];
+    } catch {
+      return [];
+    }
   };
 
   try {
@@ -393,6 +398,14 @@ export async function searchSpotifyTrack(
       candidates = await querySpotify(broadQuery);
     }
 
+    // Try alternate queries if multilingual (e.g. Romanized Hindi part)
+    if ((!candidates || candidates.length === 0) && alternateQueries) {
+      for (const altQuery of alternateQueries) {
+        candidates = await querySpotify(altQuery);
+        if (candidates && candidates.length > 0) break;
+      }
+    }
+
     if (!candidates || candidates.length === 0) {
       return {
         track: null,
@@ -400,27 +413,22 @@ export async function searchSpotifyTrack(
       };
     }
 
+    // Find best match: prioritize duration if within 30 seconds, otherwise take best candidate
     let bestMatch: any = null;
     let minDiffSec = Infinity;
 
     for (const item of candidates) {
-      const durCheck = isDurationValid(item.duration_ms, cleaned.rawDurationSec, 12);
+      const durCheck = isDurationValid(item.duration_ms, cleaned.rawDurationSec, 35);
       if (durCheck.valid && durCheck.diffSec < minDiffSec) {
         minDiffSec = durCheck.diffSec;
         bestMatch = item;
       }
     }
 
+    // If no candidate was within ±35s (common with music videos that have long skits/intros),
+    // still use the top relevant candidate from Spotify instead of failing the track
     if (!bestMatch) {
-      const first = candidates[0];
-      const checkFirst = isDurationValid(first.duration_ms, cleaned.rawDurationSec, 12);
-      if (cleaned.rawDurationSec && !checkFirst.valid) {
-        return {
-          track: null,
-          reason: `Found "${first.name}" but duration mismatch (${Math.round(first.duration_ms / 1000)}s vs YouTube ${cleaned.rawDurationSec}s)`,
-        };
-      }
-      bestMatch = first;
+      bestMatch = candidates[0];
     }
 
     const result: SpotifyTrackResult = {

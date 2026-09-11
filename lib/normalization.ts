@@ -5,14 +5,15 @@ import { CleanedTrackMetadata, YouTubeTrack } from './types';
  */
 const NOISE_REGEXES = [
   // Parentheses or brackets containing common video/audio keywords
-  /\s*[\(\[]\s*[^)\]]*(official|music\s*video|audio|video|lyrics?|hd|4k|8k|remaster|visualizer|mix|ver(\.|\b)|version|prod|explicit|clean|clip|soundtrack|ost|live|session|edit|remix|hq|hq audio|uhd)[^)\]]*[\)\]]/gi,
+  /\s*[\(\[]\s*[^)\]]*(official|music\s*video|audio|video|lyrics?|lyrical|hd|4k|8k|remaster|visualizer|mix|ver(\.|\b)|version|prod|explicit|clean|clip|soundtrack|ost|live|session|edit|remix|hq|hq audio|uhd|full\s*song|full\s*video|promo|teaser)[^)\]]*[\)\]]/gi,
 
   // Bracketed tags: [anything short or tag-like]
-  /\s*\[\s*(mv|m\/v|pv|hq|hd|4k|8k|audio|lyrics?|official|explicit|clean|visualizer|topic)\s*\]/gi,
+  /\s*\[\s*(mv|m\/v|pv|hq|hd|4k|8k|audio|lyrics?|official|explicit|clean|visualizer|topic|full\s*song)\s*\]/gi,
 
-  // Trailing noise without brackets: - Official Music Video, | Official Video, etc.
-  /\s*[-–—|•/]\s*official\s*(music\s*)?(video|audio|visualizer|lyric\s*video)?\s*$/gi,
-  /\s*[-–—|•/]\s*(music\s*video|lyric\s*video|audio\s*video|official\s*hd|4k\s*video)\s*$/gi,
+  // Trailing noise without brackets: - Official Music Video, | Official Video, | Lyrical Video, etc.
+  /\s*[-–—|•/]\s*official\s*(music\s*)?(video|audio|visualizer|lyric\s*video|lyrical\s*video)?\s*$/gi,
+  /\s*[-–—|•/]\s*(music\s*video|lyric\s*video|lyrical\s*video|audio\s*video|official\s*hd|4k\s*video|full\s*video\s*song|full\s*video|full\s*song|lyrical)\s*$/gi,
+  /\s*[-–—|•/]\s*(video\s*song|audio\s*song|video|audio)\s*$/gi,
 ];
 
 /**
@@ -24,22 +25,19 @@ const FEAT_REGEXES = [
 ];
 
 /**
- * Cleans YouTube channel names (e.g. "Daft Punk - Topic" -> "Daft Punk", "EminemVEVO" -> "Eminem")
+ * Cleans YouTube channel names (e.g. "Daft Punk - Topic" -> "Daft Punk", "T-Series" -> "T-Series")
  */
 export function cleanChannelName(channelName: string): string {
   if (!channelName) return '';
   let cleaned = channelName.trim();
-  // Remove " - Topic"
   cleaned = cleaned.replace(/\s*-\s*Topic$/i, '');
-  // Remove "VEVO" suffix
   cleaned = cleaned.replace(/VEVO$/i, '');
-  // Remove "Official", "Records", "Channel", "Music" at end
   cleaned = cleaned.replace(/\s*(Official|Records|Channel|Music|Studio)$/i, '');
   return cleaned.trim();
 }
 
 /**
- * Parses ISO 8601 duration strings from YouTube API (e.g., "PT3M45S", "PT1H2M10S") into seconds.
+ * Parses ISO 8601 duration strings from YouTube API into seconds.
  */
 export function parseYouTubeDuration(isoDuration?: string): number | undefined {
   if (!isoDuration) return undefined;
@@ -53,7 +51,8 @@ export function parseYouTubeDuration(isoDuration?: string): number | undefined {
 
 /**
  * Core Track Normalization Function
- * Cleans YouTube noise and extracts separated Artist and Song Title.
+ * Cleans YouTube noise, handles multilingual titles (e.g. Hindi + Romanized Hindi),
+ * and extracts separated Artist and Song Title.
  */
 export function cleanTrackMetadata(
   title: string,
@@ -63,76 +62,90 @@ export function cleanTrackMetadata(
   const originalTitle = title || '';
   let workingTitle = originalTitle.trim();
 
-  // 1. First pass noise filter on full string
+  // 1. Remove quotation marks
+  workingTitle = workingTitle.replace(/^["'“‘](.*)["'”’]$/, '$1').trim();
+
+  // 2. First pass noise filter on full string
   for (const regex of NOISE_REGEXES) {
     workingTitle = workingTitle.replace(regex, ' ');
   }
 
-  // 2. Remove quotation marks
-  workingTitle = workingTitle.replace(/^["'“‘](.*)["'”’]$/, '$1').trim();
+  // Remove trailing standalone words like "Video", "Lyrical", "Full Song"
+  workingTitle = workingTitle.replace(/\b(official\s+video|music\s+video|lyric\s+video|lyrical\s+video|video\s+song|video|audio)\b/gi, ' ');
 
   let artist = '';
   let songTitle = '';
 
-  // 3. Check for standard separators: "Artist - Title", "Artist – Title", "Artist : Title", "Artist | Title"
-  const separatorMatch = workingTitle.match(/^(.*?)\s*[-–—:|•]\s*(.*)$/);
+  // 3. Check for separators: "Artist - Title", "Movie | Song | Singer", etc.
+  // In Indian music, often: "Movie - Song Video | Singer | Director"
+  const pipeParts = workingTitle.split(/\s*\|\s*/).map((s) => s.trim()).filter(Boolean);
+  const hyphenMatch = workingTitle.match(/^(.*?)\s*[-–—:]\s*(.*)$/);
 
-  if (separatorMatch) {
-    const rawArtist = separatorMatch[1].trim();
-    const rawTitle = separatorMatch[2].trim();
+  if (pipeParts.length >= 2) {
+    // Pipe separated, e.g. "Sigaram Thodu - Pidikkudhae | Vikram Prabhu | D. Imman"
+    // Part 0 is usually Movie - Song, subsequent parts are artists/actors
+    const firstPart = pipeParts[0];
+    const subHyphen = firstPart.match(/^(.*?)\s*[-–—:]\s*(.*)$/);
+    if (subHyphen) {
+      songTitle = subHyphen[2].trim();
+      artist = pipeParts.slice(1).join(' ').trim() || subHyphen[1].trim();
+    } else {
+      songTitle = firstPart;
+      artist = pipeParts.slice(1).join(' ').trim();
+    }
+  } else if (hyphenMatch) {
+    const rawPart1 = hyphenMatch[1].trim();
+    const rawPart2 = hyphenMatch[2].trim();
 
-    // Check if the title part contains "by"
-    if (rawTitle.toLowerCase().includes(' by ')) {
-      const byParts = rawTitle.split(/\s+by\s+/i);
+    if (rawPart2.toLowerCase().includes(' by ')) {
+      const byParts = rawPart2.split(/\s+by\s+/i);
       songTitle = byParts[0].trim();
       artist = byParts[1].trim();
     } else {
-      artist = rawArtist;
-      songTitle = rawTitle;
+      artist = rawPart1;
+      songTitle = rawPart2;
     }
   } else if (workingTitle.toLowerCase().includes(' by ')) {
-    // "Title by Artist"
     const byParts = workingTitle.split(/\s+by\s+/i);
     songTitle = byParts[0].trim();
     artist = byParts[1].trim();
   } else {
-    // No separator found: Assume the workingTitle is the track name, fallback artist is cleaned channelTitle
     songTitle = workingTitle;
     artist = cleanChannelName(channelTitle);
   }
 
-  // 4. Second pass noise filter on song title and artist separately
+  // 4. Second pass noise filter
   for (const regex of NOISE_REGEXES) {
     songTitle = songTitle.replace(regex, ' ');
     artist = artist.replace(regex, ' ');
   }
 
-  // 5. Strip feature artists from song title for a cleaner primary search query
+  // 5. Strip feature artists from song title
   let cleanedSongTitle = songTitle;
   for (const featRegex of FEAT_REGEXES) {
     cleanedSongTitle = cleanedSongTitle.replace(featRegex, ' ');
   }
 
-  // Clean artist: remove ft / feat from artist field as well
   let cleanedArtist = artist;
   for (const featRegex of FEAT_REGEXES) {
     cleanedArtist = cleanedArtist.replace(featRegex, ' ');
   }
 
-  // 6. Final whitespace normalization and strip leftover brackets or punctuation
+  // 6. Clean extra punctuation like ! and trailing commas
   cleanedSongTitle = cleanedSongTitle
-    .replace(/[,\-_./|]+$/, '')
-    .replace(/^[,\-_./|]+/, '')
+    .replace(/[,\-_./|!:]+$/, '')
+    .replace(/^[,\-_./|!:]+/, '')
     .replace(/\s+/g, ' ')
     .trim();
 
   cleanedArtist = cleanChannelName(cleanedArtist)
-    .replace(/[,\-_./|]+$/, '')
-    .replace(/^[,\-_./|]+/, '')
+    .replace(/[,\-_./|!:]+$/, '')
+    .replace(/^[,\-_./|!:]+/, '')
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Fallback: If artist ended up blank, use channel title
+  // If title has comma separated parts (e.g. "Hindi title, English title, Singer Bhajan")
+  // Keep the title clean but preserve original
   if (!cleanedArtist && channelTitle) {
     cleanedArtist = cleanChannelName(channelTitle);
   }
@@ -148,28 +161,67 @@ export function cleanTrackMetadata(
 
 /**
  * Builds search queries for the Spotify catalog.
+ * CRITICAL: Uses Unicode letters/numbers (\p{L}\p{N}) so Hindi, Tamil, Punjabi,
+ * Telugu, Korean, Japanese, and all non-Latin scripts are NEVER stripped!
  */
 export function buildSpotifySearchQueries(cleaned: CleanedTrackMetadata): {
   strictQuery: string;
   fallbackQuery: string;
   broadQuery: string;
+  alternateQueries?: string[];
 } {
-  const cleanTitleNoSpecial = cleaned.cleanedTitle.replace(/[^\w\s]/gi, ' ').replace(/\s+/g, ' ').trim();
-  const cleanArtistNoSpecial = cleaned.cleanedArtist.replace(/[^\w\s]/gi, ' ').replace(/\s+/g, ' ').trim();
+  // Strip punctuation and special symbols while preserving all letters in any language/script
+  const cleanTitle = cleaned.cleanedTitle
+    .replace(/["'()\[\]{},.!|/\\:;?*~#@$%^&+=<>_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  // Strict structured query: track:X artist:Y
-  const strictQuery = `track:${cleanTitleNoSpecial} artist:${cleanArtistNoSpecial}`;
+  const cleanArtist = cleaned.cleanedArtist
+    .replace(/["'()\[\]{},.!|/\\:;?*~#@$%^&+=<>_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  // Fallback combined query: "Song Artist"
-  const fallbackQuery = `${cleanTitleNoSpecial} ${cleanArtistNoSpecial}`.trim();
+  // 1. Structured query: track:X artist:Y (only if artist is not generic)
+  const isGenericArtist =
+    !cleanArtist ||
+    /^(unknown|various|topic|channel|user|music)$/i.test(cleanArtist) ||
+    cleanArtist.length < 2;
 
-  // Broad query: just song title
-  const broadQuery = cleanTitleNoSpecial;
+  const strictQuery = !isGenericArtist
+    ? `track:${cleanTitle} artist:${cleanArtist}`
+    : cleanTitle;
+
+  // 2. Fallback query: combined title + artist
+  const fallbackQuery = !isGenericArtist
+    ? `${cleanTitle} ${cleanArtist}`.trim()
+    : cleanTitle;
+
+  // 3. Broad query: just song title
+  const broadQuery = cleanTitle;
+
+  // 4. Alternate queries for multilingual Indian music (e.g. "Hindi Part , Romanized Part")
+  const alternateQueries: string[] = [];
+
+  // Check if title has comma, pipe, or dash separators with Romanized text
+  const parts = cleaned.originalTitle
+    .split(/[,!|–—\-]/)
+    .map((p) => p.replace(/["'()\[\]{},.!|/\\:;?*~#@$%^&+=<>_]/g, ' ').trim())
+    .filter((p) => p.length > 3);
+
+  for (const part of parts) {
+    if (/[a-zA-Z]{3,}/.test(part) && part !== cleanTitle) {
+      alternateQueries.push(part);
+      if (!isGenericArtist) {
+        alternateQueries.push(`${part} ${cleanArtist}`.trim());
+      }
+    }
+  }
 
   return {
     strictQuery,
     fallbackQuery,
     broadQuery,
+    alternateQueries,
   };
 }
 

@@ -184,7 +184,8 @@ export async function searchPlatformTrack(
   cleanedTitle: string,
   cleanedArtist: string,
   durationSec?: number,
-  isDemoMode: boolean = false
+  isDemoMode: boolean = false,
+  originalTitle?: string
 ): Promise<{ track: GenericTrackResult | null; reason?: string }> {
   if (platform === 'youtube' && accessToken && accessToken !== 'demo_token') {
     const res = await searchYouTubeTrack(accessToken, cleanedTitle, cleanedArtist, durationSec, false);
@@ -208,7 +209,7 @@ export async function searchPlatformTrack(
     const res = await searchSpotifyTrack(
       accessToken,
       {
-        originalTitle: cleanedTitle,
+        originalTitle: originalTitle || cleanedTitle,
         channelTitle: cleanedArtist,
         cleanedTitle,
         cleanedArtist,

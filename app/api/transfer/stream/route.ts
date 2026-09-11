@@ -184,19 +184,18 @@ export async function GET(request: NextRequest) {
           logLevel: 'info',
         });
 
-        // Realistic delay in demo mode for visualization
-        if (isDemo) {
-          await new Promise((resolve) => setTimeout(resolve, 280));
-        }
+        // Polite API pacing: 120ms between real queries prevents Spotify 429 rate limits across large playlists (500+ songs)
+        await new Promise((resolve) => setTimeout(resolve, isDemo ? 260 : 120));
 
-        // Search track on target platform
+        // Search track on target platform (passing originalTitle for full segment extraction)
         const searchResult = await searchPlatformTrack(
           targetPlatform,
           targetAccessToken,
           cleaned.cleanedTitle,
           cleaned.cleanedArtist,
           track.durationSec,
-          isDemo
+          isDemo,
+          track.title
         );
 
         if (searchResult.track) {

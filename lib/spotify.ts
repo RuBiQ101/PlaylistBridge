@@ -372,19 +372,37 @@ export async function searchSpotifyTrack(
 
   const { strictQuery, fallbackQuery, broadQuery, alternateQueries } = buildSpotifySearchQueries(cleaned);
 
-  const querySpotify = async (q: string) => {
+  const querySpotify = async (q: string): Promise<any[]> => {
     if (!q || q.trim().length < 2) return [];
-    try {
-      const url = `https://api.spotify.com/v1/search?type=track&limit=5&q=${encodeURIComponent(q)}`;
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!res.ok) return [];
-      const json = await res.json();
-      return json.tracks?.items || [];
-    } catch {
-      return [];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const url = `https://api.spotify.com/v1/search?type=track&limit=5&q=${encodeURIComponent(q)}`;
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (res.status === 429) {
+          const retryHeader = res.headers.get('Retry-After');
+          const waitSec = retryHeader ? Math.max(parseInt(retryHeader, 10), 1) : 2;
+          console.warn(`[Spotify Rate Limit 429] Waiting ${waitSec}s before retrying query: "${q}"...`);
+          await new Promise((resolve) => setTimeout(resolve, waitSec * 1000));
+          continue;
+        }
+
+        if (res.status === 401) {
+          console.error('[Spotify Auth 401] Access token expired or invalid');
+          return [];
+        }
+
+        if (!res.ok) return [];
+        const json = await res.json();
+        return json.tracks?.items || [];
+      } catch {
+        if (attempt === 2) return [];
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
     }
+    return [];
   };
 
   try {

@@ -230,6 +230,15 @@ export function buildSpotifySearchQueries(cleaned: CleanedTrackMetadata): {
       alternateQueries.push(segments[1]);
       seenQueries.add(segments[1].toLowerCase());
     }
+
+    // Segment 0 + Segment 2 (often Song Title + Singer / Composer in Bollywood e.g. "Phulari Pandavaas")
+    if (segments.length >= 3) {
+      const combo02 = `${segments[0]} ${segments[2]}`.trim();
+      if (!seenQueries.has(combo02.toLowerCase())) {
+        alternateQueries.push(combo02);
+        seenQueries.add(combo02.toLowerCase());
+      }
+    }
   }
 
   // Devanagari / Regional script check

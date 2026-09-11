@@ -186,7 +186,7 @@ export async function searchPlatformTrack(
   durationSec?: number,
   isDemoMode: boolean = false,
   originalTitle?: string
-): Promise<{ track: GenericTrackResult | null; reason?: string }> {
+): Promise<{ track: GenericTrackResult | null; reason?: string; status?: number }> {
   if (platform === 'youtube' && accessToken && accessToken !== 'demo_token') {
     const res = await searchYouTubeTrack(accessToken, cleanedTitle, cleanedArtist, durationSec, false);
     if (!res.track) return { track: null, reason: res.reason };
@@ -217,7 +217,7 @@ export async function searchPlatformTrack(
       },
       false
     );
-    if (!res.track) return { track: null, reason: res.reason };
+    if (!res.track) return { track: null, reason: res.reason, status: res.status };
     return {
       track: {
         id: res.track.id,

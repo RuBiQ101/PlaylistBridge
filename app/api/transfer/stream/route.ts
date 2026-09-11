@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
   const targetConfig = PLATFORMS_CONFIG[targetPlatform] || PLATFORMS_CONFIG.spotify;
 
   const sourceAccessToken = session[sourcePlatform]?.accessToken || 'demo_token';
-  const targetAccessToken = session[targetPlatform]?.accessToken || 'demo_token';
+  let targetAccessToken =
+    (targetPlatform === 'spotify' ? spotifyAccessToken : session[targetPlatform]?.accessToken) || 'demo_token';
 
   const encoder = new TextEncoder();
   const stream = new TransformStream();
@@ -88,6 +89,44 @@ export async function GET(request: NextRequest) {
     const startTime = Date.now();
 
     try {
+      // Pre-flight check: Verify Spotify token validity before starting long transfer
+      if (targetPlatform === 'spotify' && !isDemo && targetAccessToken !== 'demo_token') {
+        try {
+          const testRes = await fetch('https://api.spotify.com/v1/me', {
+            headers: { Authorization: `Bearer ${targetAccessToken}` },
+            signal: AbortSignal.timeout(5000),
+          });
+
+          if (testRes.status === 401) {
+            console.warn('[Preflight] Spotify token 401. Attempting refresh...');
+            if (session.spotify?.refreshToken) {
+              const refreshed = await refreshSpotifyAccessToken(session.spotify.refreshToken);
+              targetAccessToken = refreshed.accessToken;
+              session.spotify.accessToken = refreshed.accessToken;
+              session.spotify.expiresAt = Date.now() + refreshed.expiresIn * 1000;
+              await saveSession(session);
+              console.log('[Preflight] Spotify token successfully refreshed!');
+            } else {
+              await sendEvent({
+                type: 'ERROR',
+                playlistId,
+                sourcePlatform,
+                targetPlatform,
+                totalTracks: 0,
+                currentIndex: 0,
+                matchedCount: 0,
+                unmatchedCount: 0,
+                message: 'Your Spotify login session has expired (tokens last 1 hour). Please click "Disconnect" on Spotify and reconnect your account to continue.',
+                logLevel: 'error',
+              });
+              return;
+            }
+          }
+        } catch (checkErr: any) {
+          console.warn('[Preflight] Spotify test warning:', checkErr.message);
+        }
+      }
+
       // 1. Initialize Transfer
       await sendEvent({
         type: 'INIT',
@@ -187,8 +226,7 @@ export async function GET(request: NextRequest) {
         // Polite API pacing: 120ms between real queries prevents Spotify 429 rate limits across large playlists (500+ songs)
         await new Promise((resolve) => setTimeout(resolve, isDemo ? 260 : 120));
 
-        // Search track on target platform (passing originalTitle for full segment extraction)
-        const searchResult = await searchPlatformTrack(
+        let searchResult = await searchPlatformTrack(
           targetPlatform,
           targetAccessToken,
           cleaned.cleanedTitle,
@@ -197,6 +235,64 @@ export async function GET(request: NextRequest) {
           isDemo,
           track.title
         );
+
+        // Check if token expired mid-way during transfer
+        if (!searchResult.track && searchResult.status === 401 && targetPlatform === 'spotify' && !isDemo) {
+          console.warn('[Stream] Spotify 401 during track search. Attempting refresh...');
+          if (session.spotify?.refreshToken) {
+            try {
+              const refreshed = await refreshSpotifyAccessToken(session.spotify.refreshToken);
+              targetAccessToken = refreshed.accessToken;
+              session.spotify.accessToken = refreshed.accessToken;
+              session.spotify.expiresAt = Date.now() + refreshed.expiresIn * 1000;
+              if (refreshed.refreshToken) session.spotify.refreshToken = refreshed.refreshToken;
+              await saveSession(session);
+              console.log('[Stream] Spotify token refreshed! Retrying track search...');
+
+              // Retry this track with fresh token
+              searchResult = await searchPlatformTrack(
+                targetPlatform,
+                targetAccessToken,
+                cleaned.cleanedTitle,
+                cleaned.cleanedArtist,
+                track.durationSec,
+                isDemo,
+                track.title
+              );
+            } catch (refErr: any) {
+              console.error('[Stream] Spotify token refresh failed:', refErr.message);
+              await sendEvent({
+                type: 'ERROR',
+                playlistId,
+                playlistTitle: sourcePlaylistTitle,
+                sourcePlatform,
+                targetPlatform,
+                totalTracks,
+                currentIndex: index,
+                matchedCount,
+                unmatchedCount,
+                message: 'Your Spotify login session has expired (401). Please click "Disconnect" on Spotify on the home screen and reconnect your account to continue.',
+                logLevel: 'error',
+              });
+              return;
+            }
+          } else {
+            await sendEvent({
+              type: 'ERROR',
+              playlistId,
+              playlistTitle: sourcePlaylistTitle,
+              sourcePlatform,
+              targetPlatform,
+              totalTracks,
+              currentIndex: index,
+              matchedCount,
+              unmatchedCount,
+              message: 'Your Spotify login session has expired. Please click "Disconnect" on Spotify on the home screen and reconnect your account to continue.',
+              logLevel: 'error',
+            });
+            return;
+          }
+        }
 
         if (searchResult.track) {
           matchedCount++;

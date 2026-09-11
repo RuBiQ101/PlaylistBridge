@@ -277,7 +277,15 @@ export default function Home() {
             <span>•</span>
             <span>© 2026 RuBiQ. All rights reserved.</span>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-[11px]">
+          <div className="flex flex-wrap items-center gap-3 text-[11px]">
+            <a href="/privacy" className="hover:text-emerald-400 transition underline">
+              Privacy Policy
+            </a>
+            <span>•</span>
+            <a href="/terms" className="hover:text-emerald-400 transition underline">
+              Terms of Service
+            </a>
+            <span>•</span>
             <span>YouTube Music</span>
             <span>•</span>
             <span>Spotify</span>
@@ -285,8 +293,6 @@ export default function Home() {
             <span>Amazon Music</span>
             <span>•</span>
             <span>JioSaavn</span>
-            <span>•</span>
-            <span>Duration Filter (±12s)</span>
           </div>
         </div>
       </footer>

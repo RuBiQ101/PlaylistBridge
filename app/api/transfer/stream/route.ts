@@ -122,6 +122,30 @@ export async function GET(request: NextRequest) {
               return;
             }
           }
+
+          // Also test search endpoint to verify Spotify API search quota is healthy
+          const searchCheck = await fetch('https://api.spotify.com/v1/search?type=track&limit=1&q=test', {
+            headers: { Authorization: `Bearer ${targetAccessToken}` },
+            signal: AbortSignal.timeout(5000),
+          });
+
+          if (searchCheck.status === 429) {
+            const retryHeader = searchCheck.headers.get('retry-after') || '600';
+            const waitMin = Math.max(1, Math.ceil(parseInt(retryHeader, 10) / 60));
+            await sendEvent({
+              type: 'ERROR',
+              playlistId,
+              sourcePlatform,
+              targetPlatform,
+              totalTracks: 0,
+              currentIndex: 0,
+              matchedCount: 0,
+              unmatchedCount: 0,
+              message: `Spotify Developer API quota exceeded (429). Spotify has temporarily throttled search requests for ~${waitMin} minute(s). Please wait for the cooldown or create a new Spotify Developer App in developer.spotify.com/dashboard.`,
+              logLevel: 'error',
+            });
+            return;
+          }
         } catch (checkErr: any) {
           console.warn('[Preflight] Spotify test warning:', checkErr.message);
         }
@@ -223,8 +247,8 @@ export async function GET(request: NextRequest) {
           logLevel: 'info',
         });
 
-        // Polite API pacing: 120ms between real queries prevents Spotify 429 rate limits across large playlists (500+ songs)
-        await new Promise((resolve) => setTimeout(resolve, isDemo ? 260 : 120));
+        // Polite API pacing: 300ms between real queries prevents Spotify 429 rate limits across large playlists (500+ songs)
+        await new Promise((resolve) => setTimeout(resolve, isDemo ? 260 : 300));
 
         let searchResult = await searchPlatformTrack(
           targetPlatform,
@@ -292,6 +316,24 @@ export async function GET(request: NextRequest) {
             });
             return;
           }
+        }
+
+        // Check if rate limited / quota exceeded (429) during transfer
+        if (!searchResult.track && searchResult.status === 429 && targetPlatform === 'spotify' && !isDemo) {
+          await sendEvent({
+            type: 'ERROR',
+            playlistId,
+            playlistTitle: sourcePlaylistTitle,
+            sourcePlatform,
+            targetPlatform,
+            totalTracks,
+            currentIndex: index,
+            matchedCount,
+            unmatchedCount,
+            message: 'Spotify API rate limit / quota exceeded (429). Migration stopped to protect your account. Please wait a few minutes before resuming.',
+            logLevel: 'error',
+          });
+          return;
         }
 
         if (searchResult.track) {

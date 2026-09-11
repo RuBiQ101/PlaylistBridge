@@ -357,6 +357,8 @@ export async function fetchSpotifyPlaylistTracks(
   return tracks;
 }
 
+const spotifySearchCache = new Map<string, any[]>();
+
 /**
  * Searches Spotify for a track using strict query with fallback to broad query,
  * and validates candidate duration (within ±12s).
@@ -374,6 +376,11 @@ export async function searchSpotifyTrack(
 
   const querySpotify = async (q: string): Promise<{ items: any[]; status: number }> => {
     if (!q || q.trim().length < 2) return { items: [], status: 200 };
+    const cacheKey = q.trim().toLowerCase();
+    if (spotifySearchCache.has(cacheKey)) {
+      return { items: spotifySearchCache.get(cacheKey) || [], status: 200 };
+    }
+
     try {
       const url = `https://api.spotify.com/v1/search?type=track&limit=5&q=${encodeURIComponent(q)}`;
       const res = await fetch(url, {
@@ -393,7 +400,10 @@ export async function searchSpotifyTrack(
 
       if (!res.ok) return { items: [], status: res.status };
       const json = await res.json();
-      return { items: json.tracks?.items || [], status: 200 };
+      const items = json.tracks?.items || [];
+      if (spotifySearchCache.size > 2000) spotifySearchCache.clear();
+      spotifySearchCache.set(cacheKey, items);
+      return { items, status: 200 };
     } catch {
       return { items: [], status: 500 };
     }

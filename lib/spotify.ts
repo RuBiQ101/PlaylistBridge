@@ -370,55 +370,52 @@ export async function searchSpotifyTrack(
     return searchMockSpotify(cleaned.cleanedTitle, cleaned.cleanedArtist, cleaned.rawDurationSec);
   }
 
-  const { strictQuery, fallbackQuery, broadQuery, alternateQueries } = buildSpotifySearchQueries(cleaned);
+  const { fallbackQuery, broadQuery, alternateQueries } = buildSpotifySearchQueries(cleaned);
 
   const querySpotify = async (q: string): Promise<any[]> => {
     if (!q || q.trim().length < 2) return [];
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const url = `https://api.spotify.com/v1/search?type=track&limit=5&q=${encodeURIComponent(q)}`;
-        const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+    try {
+      const url = `https://api.spotify.com/v1/search?type=track&limit=5&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(5000),
+      });
 
-        if (res.status === 429) {
-          const retryHeader = res.headers.get('Retry-After');
-          const waitSec = retryHeader ? Math.max(parseInt(retryHeader, 10), 1) : 2;
-          console.warn(`[Spotify Rate Limit 429] Waiting ${waitSec}s before retrying query: "${q}"...`);
-          await new Promise((resolve) => setTimeout(resolve, waitSec * 1000));
-          continue;
-        }
-
-        if (res.status === 401) {
-          console.error('[Spotify Auth 401] Access token expired or invalid');
-          return [];
-        }
-
-        if (!res.ok) return [];
-        const json = await res.json();
-        return json.tracks?.items || [];
-      } catch {
-        if (attempt === 2) return [];
-        await new Promise((resolve) => setTimeout(resolve, 300));
+      if (res.status === 429) {
+        // Spotify Rate Limit: Cap wait to at most 2 seconds so migration never hangs
+        const retryHeader = res.headers.get('Retry-After');
+        const waitSec = Math.min(retryHeader ? parseInt(retryHeader, 10) : 1, 2);
+        console.warn(`[Spotify Rate Limit 429] Pacing ${waitSec}s...`);
+        await new Promise((resolve) => setTimeout(resolve, waitSec * 1000));
+        return [];
       }
+
+      if (res.status === 401) {
+        console.error('[Spotify Auth 401] Access token expired or invalid');
+        return [];
+      }
+
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.tracks?.items || [];
+    } catch (err: any) {
+      // Timeout or network glitch, return empty so pipeline continues smoothly
+      return [];
     }
-    return [];
   };
 
   try {
-    let candidates = await querySpotify(strictQuery);
+    // 1. Primary search: "Song Artist" (fuzzy Lucene search — most reliable on Spotify)
+    let candidates = await querySpotify(fallbackQuery);
 
-    if (!candidates || candidates.length === 0) {
-      candidates = await querySpotify(fallbackQuery);
-    }
-
+    // 2. Fallback: "Song" title only
     if (!candidates || candidates.length === 0) {
       candidates = await querySpotify(broadQuery);
     }
 
-    // Try alternate queries if multilingual (e.g. Romanized Hindi part)
-    if ((!candidates || candidates.length === 0) && alternateQueries) {
-      for (const altQuery of alternateQueries) {
+    // 3. Fallback: Top alternate segment if multilingual/movie
+    if ((!candidates || candidates.length === 0) && alternateQueries && alternateQueries.length > 0) {
+      for (const altQuery of alternateQueries.slice(0, 2)) {
         candidates = await querySpotify(altQuery);
         if (candidates && candidates.length > 0) break;
       }
